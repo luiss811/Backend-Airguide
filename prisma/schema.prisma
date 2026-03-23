@@ -1,0 +1,190 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RolUsuario {
+  admin
+  alumno
+}
+
+enum EstadoUsuario {
+  pendiente
+  activo
+  rechazado
+}
+
+enum TipoEdificio {
+  academico
+  administrativo
+  recreativo
+}
+
+enum TipoSalon {
+  aula
+  laboratorio
+  auditorio
+}
+
+enum TipoRuta {
+  interna
+  externa
+}
+
+enum TipoOrigen {
+  edificio
+  salon
+  cubiculo
+  evento
+}
+
+enum TipoDestino {
+  edificio
+  salon
+  cubiculo
+  evento
+}
+
+model Usuario {
+  id_usuario         Int             @id @default(autoincrement())
+  matricula          String?         @unique
+  nombre             String
+  correo             String          @unique
+  password_hash      String
+  rol                RolUsuario
+  estado             EstadoUsuario   @default(pendiente)
+  fecha_registro     DateTime        @default(now())
+  fecha_validacion   DateTime?
+
+  logs_acceso        LogAcceso[]
+
+  @@map("usuarios")
+}
+
+model Edificio {
+  id_edificio        Int             @id @default(autoincrement())
+  nombre             String
+  descripcion        String?         @db.Text
+  latitud            Decimal         @db.Decimal(10, 8)
+  longitud           Decimal         @db.Decimal(11, 8)
+  tipo               TipoEdificio
+  activo             Boolean         @default(true)
+
+  salones            Salon[]
+  cubiculos          Cubiculo[]
+  eventos            Evento[]
+
+  @@map("edificios")
+}
+
+model Salon {
+  id_salon           Int             @id @default(autoincrement())
+  id_edificio        Int
+  nombre             String
+  piso               Int
+  tipo               TipoSalon
+  activo             Boolean         @default(true)
+
+  edificio           Edificio        @relation(fields: [id_edificio], references: [id_edificio], onDelete: Cascade)
+
+  @@index([id_edificio])
+  @@map("salones")
+}
+
+model Profesor {
+  id_profesor        Int             @id @default(autoincrement())
+  nombre             String
+  correo             String          @unique
+  departamento       String
+  activo             Boolean         @default(true)
+
+  cubiculos          Cubiculo[]
+
+  @@map("profesores")
+}
+
+model Cubiculo {
+  id_cubiculo        Int             @id @default(autoincrement())
+  id_profesor        Int
+  id_edificio        Int
+  numero             String
+  piso               Int
+  referencia         String?         @db.Text
+  activo             Boolean         @default(true)
+
+  profesor           Profesor        @relation(fields: [id_profesor], references: [id_profesor], onDelete: Cascade)
+  edificio           Edificio        @relation(fields: [id_edificio], references: [id_edificio], onDelete: Cascade)
+
+  @@index([id_profesor])
+  @@index([id_edificio])
+  @@map("cubiculos")
+}
+
+model Evento {
+  id_evento          Int             @id @default(autoincrement())
+  nombre             String
+  descripcion        String?         @db.Text
+  fecha_inicio       DateTime
+  fecha_fin          DateTime
+  id_edificio        Int
+  publico            Boolean         @default(true)
+  activo             Boolean         @default(true)
+
+  edificio           Edificio        @relation(fields: [id_edificio], references: [id_edificio], onDelete: Cascade)
+
+  @@index([id_edificio])
+  @@index([fecha_inicio])
+  @@map("eventos")
+}
+
+model Ruta {
+  id_ruta            Int             @id @default(autoincrement())
+  tipo               TipoRuta
+  origen_tipo        TipoOrigen
+  origen_id          Int
+  destino_tipo       TipoDestino
+  destino_id         Int
+  tiempo_estimado    Int?            // en minutos
+  activo             Boolean         @default(true)
+
+  detalles           RutaDetalle[]
+
+  @@index([origen_tipo, origen_id])
+  @@index([destino_tipo, destino_id])
+  @@map("rutas")
+}
+
+model RutaDetalle {
+  id_detalle         Int             @id @default(autoincrement())
+  id_ruta            Int
+  orden              Int
+  instruccion        String          @db.Text
+  latitud            Decimal         @db.Decimal(10, 8)
+  longitud           Decimal         @db.Decimal(11, 8)
+
+  ruta               Ruta            @relation(fields: [id_ruta], references: [id_ruta], onDelete: Cascade)
+
+  @@index([id_ruta, orden])
+  @@map("ruta_detalle")
+}
+
+model LogAcceso {
+  id_log             Int             @id @default(autoincrement())
+  id_usuario         Int
+  fecha              DateTime        @default(now())
+  ip                 String
+  dispositivo        String?         @db.Text
+
+  usuario            Usuario         @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+
+  @@index([id_usuario])
+  @@index([fecha])
+  @@map("logs_acceso")
+}
