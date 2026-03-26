@@ -41,7 +41,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const edificio = await prisma.edificio.findUnique({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
       include: {
         salones: {
           where: { activo: true },
@@ -108,7 +108,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Res
     const data = updateEdificioSchema.parse(req.body);
 
     const existingEdificio = await prisma.edificio.findUnique({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
     });
 
     if (!existingEdificio) {
@@ -116,7 +116,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Res
     }
 
     const edificio = await prisma.edificio.update({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
       data,
     });
 
@@ -136,7 +136,7 @@ router.delete('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: 
     const { id } = req.params;
 
     const existingEdificio = await prisma.edificio.findUnique({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
     });
 
     if (!existingEdificio) {
@@ -144,7 +144,7 @@ router.delete('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: 
     }
 
     await prisma.edificio.delete({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
     });
 
     return res.json({ message: 'Edificio eliminado exitosamente' });

@@ -6,28 +6,28 @@ export async function evaluarEvento(nuevoEvento: any) {
 
   const eventos = await prisma.evento.findMany({
     where: {
-      ubicacion_id: nuevoEvento.ubicacion_id,
-      fecha: new Date(nuevoEvento.fecha)
+      id_evento: nuevoEvento.id_evento,
+      fecha_inicio: new Date(nuevoEvento.fecha)
     }
   });
 
   for (const evento of eventos) {
 
     const hayConflicto =
-      (new Date(nuevoEvento.hora_inicio) < evento.hora_fin &&
-       new Date(nuevoEvento.hora_fin) > evento.hora_inicio);
+      (new Date(nuevoEvento.fecha_inicio) < evento.fecha_fin &&
+        new Date(nuevoEvento.fecha_fin) > evento.fecha_inicio);
 
     if (hayConflicto) {
 
-      if (nuevoEvento.prioridad > evento.prioridad) {
+      if (nuevoEvento.prioridad > evento.prioridad_evento) {
 
         // 🔔 notificación
-        await prisma.notificacion.create({
-          data: {
-            usuario_id: evento.usuario_id,
-            mensaje: `Tu evento "${evento.nombre}" fue desplazado por uno de mayor prioridad`
-          }
-        });
+        // await prisma.notificacion.create({
+        //   data: {
+        //     usuario_id: evento.usuario_id,
+        //     mensaje: `Tu evento "${evento.nombre}" fue desplazado por uno de mayor prioridad`
+        //   }
+        // });
 
         return {
           permitir: true,

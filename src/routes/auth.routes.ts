@@ -103,7 +103,7 @@ router.post('/register', async (req: Request, res: Response) => {
         correo,
         password_hash: hashedPassword,
         nombre,
-        matricula: matricula || null,
+        matricula: matricula ?? "",
         rol: 'alumno',
         estado: 'pendiente', // Requiere validación del admin
       },
@@ -173,7 +173,7 @@ router.put('/validate/:id', authenticate, async (req: AuthRequest, res: Response
     }
 
     const usuario = await prisma.usuario.update({
-      where: { id_usuario: parseInt(id) },
+      where: { id_usuario: Number(id) },
       data: {
         estado,
         fecha_validacion: new Date(),

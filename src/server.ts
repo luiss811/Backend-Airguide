@@ -281,7 +281,7 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     const usuario = await prisma.usuario.create({
       data: {
         correo,
-        matricula: matricula,
+        matricula: matricula ?? "",
         password_hash: hashedPassword,
         nombre,
         rol: 'alumno',
@@ -349,7 +349,7 @@ app.put('/api/auth/validate/:id', authenticate, requireAdmin, async (req: AuthRe
     }
 
     const usuario = await prisma.usuario.update({
-      where: { id_usuario: parseInt(id) },
+      where: { id_usuario: Number(id) },
       data: {
         estado,
         fecha_validacion: new Date(),
@@ -447,7 +447,7 @@ app.get('/api/edificios/:id', async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const edificio = await prisma.edificio.findUnique({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
       include: {
         salones: {
           where: { activo: true },
@@ -514,7 +514,7 @@ app.put('/api/edificios/:id', authenticate, requireAdmin, async (req: AuthReques
     const data = updateEdificioSchema.parse(req.body);
 
     const existingEdificio = await prisma.edificio.findUnique({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
     });
 
     if (!existingEdificio) {
@@ -522,7 +522,7 @@ app.put('/api/edificios/:id', authenticate, requireAdmin, async (req: AuthReques
     }
 
     const edificio = await prisma.edificio.update({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
       data,
     });
 
@@ -542,7 +542,7 @@ app.delete('/api/edificios/:id', authenticate, requireAdmin, async (req: AuthReq
     const { id } = req.params;
 
     const existingEdificio = await prisma.edificio.findUnique({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
     });
 
     if (!existingEdificio) {
@@ -550,7 +550,7 @@ app.delete('/api/edificios/:id', authenticate, requireAdmin, async (req: AuthReq
     }
 
     await prisma.edificio.delete({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
     });
 
     return res.json({ message: 'Edificio eliminado exitosamente' });
@@ -598,7 +598,7 @@ app.get('/api/eventos/:id', async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const evento = await prisma.evento.findUnique({
-      where: { id_evento: parseInt(id) },
+      where: { id_evento: Number(id) },
       include: {
         edificio: true,
       },
@@ -661,7 +661,7 @@ app.put('/api/eventos/:id', authenticate, requireAdmin, async (req: AuthRequest,
     const data = updateEventoSchema.parse(req.body);
 
     const existingEvento = await prisma.evento.findUnique({
-      where: { id_evento: parseInt(id) },
+      where: { id_evento: Number(id) },
     });
 
     if (!existingEvento) {
@@ -688,7 +688,7 @@ app.put('/api/eventos/:id', authenticate, requireAdmin, async (req: AuthRequest,
     if (data.activo !== undefined) updateData.activo = data.activo;
 
     const evento = await prisma.evento.update({
-      where: { id_evento: parseInt(id) },
+      where: { id_evento: Number(id) },
       data: updateData,
       include: {
         edificio: true,
@@ -711,7 +711,7 @@ app.delete('/api/eventos/:id', authenticate, requireAdmin, async (req: AuthReque
     const { id } = req.params;
 
     const existingEvento = await prisma.evento.findUnique({
-      where: { id_evento: parseInt(id) },
+      where: { id_evento: Number(id) },
     });
 
     if (!existingEvento) {
@@ -719,7 +719,7 @@ app.delete('/api/eventos/:id', authenticate, requireAdmin, async (req: AuthReque
     }
 
     await prisma.evento.delete({
-      where: { id_evento: parseInt(id) },
+      where: { id_evento: Number(id) },
     });
 
     return res.json({ message: 'Evento eliminado exitosamente' });
@@ -763,7 +763,7 @@ app.get('/api/rutas/:id', async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const ruta = await prisma.ruta.findUnique({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
       include: {
         detalles: {
           orderBy: { orden: 'asc' },
@@ -859,7 +859,7 @@ app.put('/api/rutas/:id', authenticate, requireAdmin, async (req: AuthRequest, r
     const data = updateRutaSchema.parse(req.body);
 
     const existingRuta = await prisma.ruta.findUnique({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
     });
 
     if (!existingRuta) {
@@ -867,7 +867,7 @@ app.put('/api/rutas/:id', authenticate, requireAdmin, async (req: AuthRequest, r
     }
 
     const ruta = await prisma.ruta.update({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
       data,
       include: {
         detalles: {
@@ -892,7 +892,7 @@ app.delete('/api/rutas/:id', authenticate, requireAdmin, async (req: AuthRequest
     const { id } = req.params;
 
     const existingRuta = await prisma.ruta.findUnique({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
     });
 
     if (!existingRuta) {
@@ -900,7 +900,7 @@ app.delete('/api/rutas/:id', authenticate, requireAdmin, async (req: AuthRequest
     }
 
     await prisma.ruta.delete({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
     });
 
     return res.json({ message: 'Ruta eliminada exitosamente' });
@@ -917,7 +917,7 @@ app.post('/api/rutas/:id/detalles', authenticate, requireAdmin, async (req: Auth
     const data = createRutaDetalleSchema.parse(req.body);
 
     const ruta = await prisma.ruta.findUnique({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
     });
 
     if (!ruta) {
@@ -926,7 +926,7 @@ app.post('/api/rutas/:id/detalles', authenticate, requireAdmin, async (req: Auth
 
     const detalle = await prisma.rutaDetalle.create({
       data: {
-        id_ruta: parseInt(id),
+        id_ruta: Number(id),
         orden: data.orden,
         instruccion: data.instruccion,
         latitud: data.latitud,
@@ -950,7 +950,7 @@ app.delete('/api/rutas/detalles/:id', authenticate, requireAdmin, async (req: Au
     const { id } = req.params;
 
     const existingDetalle = await prisma.rutaDetalle.findUnique({
-      where: { id_detalle: parseInt(id) },
+      where: { id_detalle: Number(id) },
     });
 
     if (!existingDetalle) {
@@ -958,7 +958,7 @@ app.delete('/api/rutas/detalles/:id', authenticate, requireAdmin, async (req: Au
     }
 
     await prisma.rutaDetalle.delete({
-      where: { id_detalle: parseInt(id) },
+      where: { id_detalle: Number(id) },
     });
 
     return res.json({ message: 'Detalle eliminado' });
@@ -1000,7 +1000,7 @@ app.get('/api/edificios/:id/salones', async (req: AuthRequest, res: Response) =>
     const { id } = req.params;
 
     const salones = await prisma.salon.findMany({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
       orderBy: { piso: 'asc' },
     });
 
@@ -1018,7 +1018,7 @@ app.post('/api/edificios/:id/salones', authenticate, requireAdmin, async (req: A
     const { nombre, piso, tipo, activo } = req.body;
 
     const edificio = await prisma.edificio.findUnique({
-      where: { id_edificio: parseInt(id) },
+      where: { id_edificio: Number(id) },
     });
 
     if (!edificio) {
@@ -1027,7 +1027,7 @@ app.post('/api/edificios/:id/salones', authenticate, requireAdmin, async (req: A
 
     const salon = await prisma.salon.create({
       data: {
-        id_edificio: parseInt(id),
+        id_edificio: Number(id),
         nombre,
         piso,
         tipo,
@@ -1058,7 +1058,7 @@ app.put('/api/edificios/salones/:id', authenticate, requireAdmin, async (req: Au
     const { nombre, piso, tipo, activo, id_edificio } = req.body;
 
     const existingSalon = await prisma.salon.findUnique({
-      where: { id_salon: parseInt(id) },
+      where: { id_salon: Number(id) },
     });
 
     if (!existingSalon) {
@@ -1073,7 +1073,7 @@ app.put('/api/edificios/salones/:id', authenticate, requireAdmin, async (req: Au
     if (id_edificio !== undefined) updateData.id_edificio = id_edificio;
 
     const salon = await prisma.salon.update({
-      where: { id_salon: parseInt(id) },
+      where: { id_salon: Number(id) },
       data: updateData,
       include: {
         edificio: {
@@ -1099,7 +1099,7 @@ app.delete('/api/edificios/salones/:id', authenticate, requireAdmin, async (req:
     const { id } = req.params;
 
     const existingSalon = await prisma.salon.findUnique({
-      where: { id_salon: parseInt(id) },
+      where: { id_salon: Number(id) },
     });
 
     if (!existingSalon) {
@@ -1107,7 +1107,7 @@ app.delete('/api/edificios/salones/:id', authenticate, requireAdmin, async (req:
     }
 
     await prisma.salon.delete({
-      where: { id_salon: parseInt(id) },
+      where: { id_salon: Number(id) },
     });
 
     return res.json({ message: 'Salón eliminado exitosamente' });
@@ -1157,7 +1157,7 @@ app.get('/api/profesores/:id', async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const profesor = await prisma.profesor.findUnique({
-      where: { id_profesor: parseInt(id) },
+      where: { id_profesor: Number(id) },
       include: {
         usuario: {
           select: {
@@ -1274,7 +1274,7 @@ app.put('/api/profesores/:id', authenticate, requireAdmin, async (req: AuthReque
     const { departamento, id_cubiculo, activo } = req.body;
 
     const existingProfesor = await prisma.profesor.findUnique({
-      where: { id_profesor: parseInt(id) },
+      where: { id_profesor: Number(id) },
     });
 
     if (!existingProfesor) {
@@ -1284,7 +1284,7 @@ app.put('/api/profesores/:id', authenticate, requireAdmin, async (req: AuthReque
     // Verificar que el cubículo existe si se proporciona
     if (id_cubiculo) {
       const cubiculo = await prisma.cubiculo.findUnique({
-        where: { id_cubiculo: parseInt(id_cubiculo) },
+        where: { id_cubiculo: Number(id_cubiculo) },
       });
 
       if (!cubiculo) {
@@ -1297,7 +1297,7 @@ app.put('/api/profesores/:id', authenticate, requireAdmin, async (req: AuthReque
     if (activo !== undefined) updateData.activo = activo;
 
     const profesor = await prisma.profesor.update({
-      where: { id_profesor: parseInt(id) },
+      where: { id_profesor: Number(id) },
       data: updateData,
       include: {
         usuario: {
@@ -1339,7 +1339,7 @@ app.delete('/api/profesores/:id', authenticate, requireAdmin, async (req: AuthRe
     const { id } = req.params;
 
     const existingProfesor = await prisma.profesor.findUnique({
-      where: { id_profesor: parseInt(id) },
+      where: { id_profesor: Number(id) },
     });
 
     if (!existingProfesor) {
@@ -1347,7 +1347,7 @@ app.delete('/api/profesores/:id', authenticate, requireAdmin, async (req: AuthRe
     }
 
     await prisma.profesor.delete({
-      where: { id_profesor: parseInt(id) },
+      where: { id_profesor: Number(id) },
     });
 
     return res.json({ message: 'Profesor eliminado exitosamente' });

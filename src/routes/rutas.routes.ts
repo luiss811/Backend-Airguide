@@ -39,7 +39,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const ruta = await prisma.ruta.findUnique({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
       include: {
         detalles: {
           orderBy: { orden: 'asc' },
@@ -136,7 +136,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Res
     const data = updateRutaSchema.parse(req.body);
 
     const existingRuta = await prisma.ruta.findUnique({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
     });
 
     if (!existingRuta) {
@@ -144,7 +144,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Res
     }
 
     const ruta = await prisma.ruta.update({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
       data,
       include: {
         detalles: {
@@ -169,7 +169,7 @@ router.delete('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: 
     const { id } = req.params;
 
     const existingRuta = await prisma.ruta.findUnique({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
     });
 
     if (!existingRuta) {
@@ -177,7 +177,7 @@ router.delete('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: 
     }
 
     await prisma.ruta.delete({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
     });
 
     return res.json({ message: 'Ruta eliminada exitosamente' });
@@ -194,7 +194,7 @@ router.post('/:id/detalles', authenticate, requireAdmin, async (req: AuthRequest
     const data = createRutaDetalleSchema.parse(req.body);
 
     const ruta = await prisma.ruta.findUnique({
-      where: { id_ruta: parseInt(id) },
+      where: { id_ruta: Number(id) },
     });
 
     if (!ruta) {
@@ -203,7 +203,7 @@ router.post('/:id/detalles', authenticate, requireAdmin, async (req: AuthRequest
 
     const detalle = await prisma.rutaDetalle.create({
       data: {
-        id_ruta: parseInt(id),
+        id_ruta: Number(id),
         orden: data.orden,
         instruccion: data.instruccion,
         latitud: data.latitud,
@@ -227,7 +227,7 @@ router.delete('/detalles/:id', authenticate, requireAdmin, async (req: AuthReque
     const { id } = req.params;
 
     const existingDetalle = await prisma.rutaDetalle.findUnique({
-      where: { id_detalle: parseInt(id) },
+      where: { id_detalle: Number(id) },
     });
 
     if (!existingDetalle) {
@@ -235,7 +235,7 @@ router.delete('/detalles/:id', authenticate, requireAdmin, async (req: AuthReque
     }
 
     await prisma.rutaDetalle.delete({
-      where: { id_detalle: parseInt(id) },
+      where: { id_detalle: Number(id) },
     });
 
     return res.json({ message: 'Detalles modificados' });

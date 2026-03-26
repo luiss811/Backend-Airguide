@@ -43,7 +43,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const evento = await prisma.evento.findUnique({
-      where: { id_evento: parseInt(id) },
+      where: { id_evento: Number(id) },
       include: {
         edificio: true,
       },
@@ -83,6 +83,7 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Respo
         id_edificio: data.id_edificio,
         publico: data.publico ?? true,
         activo: data.activo ?? true,
+        id_creador: Number(req.user!.userId),
       },
       include: {
         edificio: true,
@@ -106,7 +107,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Res
     const data = updateEventoSchema.parse(req.body);
 
     const existingEvento = await prisma.evento.findUnique({
-      where: { id_evento: parseInt(id) },
+      where: { id_evento: Number(id) },
     });
 
     if (!existingEvento) {
@@ -134,7 +135,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Res
     if (data.activo !== undefined) updateData.activo = data.activo;
 
     const evento = await prisma.evento.update({
-      where: { id_evento: parseInt(id) },
+      where: { id_evento: Number(id) },
       data: updateData,
       include: {
         edificio: true,
@@ -157,7 +158,7 @@ router.delete('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: 
     const { id } = req.params;
 
     const existingEvento = await prisma.evento.findUnique({
-      where: { id_evento: parseInt(id) },
+      where: { id_evento: Number(id) },
     });
 
     if (!existingEvento) {
@@ -165,7 +166,7 @@ router.delete('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: 
     }
 
     await prisma.evento.delete({
-      where: { id_evento: parseInt(id) },
+      where: { id_evento: Number(id) },
     });
 
     return res.json({ message: 'Evento eliminado exitosamente' });
