@@ -1120,7 +1120,7 @@ app.delete('/api/edificios/salones/:id', authenticate, requireAdmin, async (req:
 // Get all profesores
 app.get('/api/profesores', async (req: AuthRequest, res: Response) => {
   try {
-    const profesores = await prisma.profesores.findMany({
+    const profesor = await prisma.profesor.findMany({
       include: {
         usuario: {
           select: {
@@ -1144,7 +1144,7 @@ app.get('/api/profesores', async (req: AuthRequest, res: Response) => {
       },
     });
 
-    return res.json(profesores);
+    return res.json(profesor);
   } catch (error) {
     console.error('Get profesores error:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
