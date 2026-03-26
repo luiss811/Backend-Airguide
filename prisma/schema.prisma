@@ -11,7 +11,9 @@ datasource db {
 }
 
 enum RolUsuario {
+  rector
   admin
+  profesor
   alumno
 }
 
@@ -54,16 +56,20 @@ enum TipoDestino {
 
 model Usuario {
   id_usuario         Int             @id @default(autoincrement())
-  matricula          String?         @unique
+  matricula          String          @unique
   nombre             String
   correo             String          @unique
   password_hash      String
   rol                RolUsuario
+  prioridad          Int             @default(4) 
   estado             EstadoUsuario   @default(pendiente)
   fecha_registro     DateTime        @default(now())
   fecha_validacion   DateTime?
 
   logs_acceso        LogAcceso[]
+  eventos_creados    Evento[]
+  profesor_perfil    Profesor?
+  codigos_otp        CodigoOtp[]
 
   @@map("usuarios")
 }
@@ -100,13 +106,14 @@ model Salon {
 
 model Profesor {
   id_profesor        Int             @id @default(autoincrement())
-  nombre             String
-  correo             String          @unique
+  id_usuario         Int             @unique
   departamento       String
   activo             Boolean         @default(true)
 
+  usuario            Usuario         @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
   cubiculos          Cubiculo[]
 
+  @@index([id_usuario])
   @@map("profesores")
 }
 
@@ -137,8 +144,12 @@ model Evento {
   publico            Boolean         @default(true)
   activo             Boolean         @default(true)
 
+  id_creador         Int
+  prioridad_evento   Int             @default(4)
+  
   edificio           Edificio        @relation(fields: [id_edificio], references: [id_edificio], onDelete: Cascade)
-
+  creador            Usuario         @relation(fields: [id_creador], references: [id_usuario])
+  
   @@index([id_edificio])
   @@index([fecha_inicio])
   @@map("eventos")
@@ -187,4 +198,30 @@ model LogAcceso {
   @@index([id_usuario])
   @@index([fecha])
   @@map("logs_acceso")
+}
+
+model CodigoOtp {
+  id                 Int             @id @default(autoincrement())
+  id_usuario         Int
+  codigo             String
+  expira_en          DateTime
+  usado              Boolean         @default(false)
+  creado_en          DateTime        @default(now())
+
+  usuario            Usuario         @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+
+  @@index([id_usuario])
+  @@index([codigo])
+  @@map("codigos_otp")
+}
+
+// NUEVO MODELO: Para guardar los caminos de Overpass Turbo (footway, path, steps)
+model CaminoGeografico {
+  id_camino        Int             @id @default(autoincrement())
+  osm_id           BigInt          @unique
+  tipo             String          // 'footway', 'path', 'steps'
+  geometria        Json            // La línea (LineString) del camino
+  activo           Boolean         @default(true)
+
+  @@map("caminos_geograficos")
 }

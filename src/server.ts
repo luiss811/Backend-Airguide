@@ -6,6 +6,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { prisma } from './lib/prisma.js';
 import { generateToken, verifyToken } from './lib/jwt.js';
+import { sendOtpEmail } from './lib/email.js';
+import { generateOtp, getOtpExpiry } from './lib/otp.js';
 import { loginSchema, registerSchema } from './validators/auth.validator.js';
 import { createEdificioSchema, updateEdificioSchema } from './validators/edificio.validator.js';
 import { createEventoSchema, updateEventoSchema } from './validators/evento.validator.js';
@@ -44,7 +46,7 @@ interface AuthRequest extends Request {
   user?: {
     userId: string;
     email: string;
-    role: 'admin' | 'alumno';
+    role: 'rector' | 'admin' | 'profesor' | 'alumno';
   };
 }
 
@@ -81,7 +83,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Login
+// Login — Step 1: validate credentials and send OTP
 app.post('/api/auth/login', async (req: Request, res: Response) => {
   try {
     const { correo, password } = loginSchema.parse(req.body);
@@ -104,13 +106,86 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
 
+    // Invalidate any previous OTPs for this user
+    await prisma.codigoOtp.updateMany({
+      where: { id_usuario: usuario.id_usuario, usado: false },
+      data: { usado: false },
+    });
+
+    // Generate and store new OTP
+    const codigo = generateOtp();
+    const expira_en = getOtpExpiry();
+
+    await prisma.codigoOtp.create({
+      data: {
+        id_usuario: usuario.id_usuario,
+        codigo,
+        expira_en,
+      },
+    });
+
+    // Send OTP via email
+    await sendOtpEmail(usuario.correo, usuario.nombre, codigo);
+
+    return res.json({
+      requiresTwoFactor: true,
+      correo: usuario.correo,
+      message: 'Código de verificación enviado a tu correo electrónico.',
+    });
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ error: error.errors[0].message });
+    }
+    console.error('Login error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Login — Step 2: verify OTP and return JWT token
+app.post('/api/auth/verify-2fa', async (req: Request, res: Response) => {
+  try {
+    const { correo, codigo } = req.body;
+
+    if (!correo || !codigo) {
+      return res.status(400).json({ error: 'Correo y código son requeridos' });
+    }
+
+    const usuario = await prisma.usuario.findUnique({ where: { correo } });
+
+    if (!usuario) {
+      return res.status(401).json({ error: 'Usuario no encontrado' });
+    }
+
+    const ahora = new Date();
+
+    const otpRecord = await prisma.codigoOtp.findFirst({
+      where: {
+        id_usuario: usuario.id_usuario,
+        codigo,
+        usado: false,
+        expira_en: { gt: ahora },
+      },
+      orderBy: { creado_en: 'desc' },
+    });
+
+    if (!otpRecord) {
+      return res.status(401).json({ error: 'Código incorrecto o expirado. Solicita uno nuevo.' });
+    }
+
+    // Mark OTP as used
+    await prisma.codigoOtp.update({
+      where: { id: otpRecord.id },
+      data: { usado: true },
+    });
+
+    // Generate JWT token
     const token = generateToken({
       userId: usuario.id_usuario.toString(),
       email: usuario.correo,
       role: usuario.rol,
     });
 
-    // Log de acceso
+    // Log access
     const userAgent = req.headers['user-agent'] || 'Desconocido';
     const ip = req.ip || req.socket.remoteAddress || 'Desconocido';
 
@@ -130,14 +205,50 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
         nombre: usuario.nombre,
         matricula: usuario.matricula,
         rol: usuario.rol,
+        prioridad: usuario.prioridad,
         estado: usuario.estado,
       },
     });
   } catch (error: any) {
-    if (error.name === 'ZodError') {
-      return res.status(400).json({ error: error.errors[0].message });
+    console.error('Verify 2FA error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Resend OTP
+app.post('/api/auth/resend-otp', async (req: Request, res: Response) => {
+  try {
+    const { correo } = req.body;
+
+    if (!correo) {
+      return res.status(400).json({ error: 'Correo es requerido' });
     }
-    console.error('Login error:', error);
+
+    const usuario = await prisma.usuario.findUnique({ where: { correo } });
+
+    if (!usuario || usuario.estado !== 'activo') {
+      // Return success to avoid email enumeration
+      return res.json({ message: 'Si el correo existe, recibirás un nuevo código.' });
+    }
+
+    // Invalidate previous OTPs
+    await prisma.codigoOtp.updateMany({
+      where: { id_usuario: usuario.id_usuario, usado: false },
+      data: { usado: true },
+    });
+
+    const codigo = generateOtp();
+    const expira_en = getOtpExpiry();
+
+    await prisma.codigoOtp.create({
+      data: { id_usuario: usuario.id_usuario, codigo, expira_en },
+    });
+
+    await sendOtpEmail(usuario.correo, usuario.nombre, codigo);
+
+    return res.json({ message: 'Nuevo código enviado a tu correo electrónico.' });
+  } catch (error: any) {
+    console.error('Resend OTP error:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -170,11 +281,12 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     const usuario = await prisma.usuario.create({
       data: {
         correo,
+        matricula: matricula,
         password_hash: hashedPassword,
         nombre,
-        matricula: matricula || null,
         rol: 'alumno',
         estado: 'pendiente',
+        prioridad: 4,
       },
     });
 
@@ -525,6 +637,7 @@ app.post('/api/eventos', authenticate, requireAdmin, async (req: AuthRequest, re
         id_edificio: data.id_edificio,
         publico: data.publico ?? true,
         activo: data.activo ?? true,
+        id_creador: parseInt(req.user!.userId),
       },
       include: {
         edificio: true,
@@ -855,6 +968,395 @@ app.delete('/api/rutas/detalles/:id', authenticate, requireAdmin, async (req: Au
   }
 });
 
+// Get all salones
+app.get('/api/edificios/salones', async (req: AuthRequest, res: Response) => {
+  try {
+    const salones = await prisma.salon.findMany({
+      include: {
+        edificio: {
+          select: {
+            id_edificio: true,
+            nombre: true,
+            tipo: true,
+          },
+        },
+      },
+      orderBy: [
+        { id_edificio: 'asc' },
+        { piso: 'asc' },
+      ],
+    });
+
+    return res.json(salones);
+  } catch (error) {
+    console.error('Get salones error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Get salones by edificio
+app.get('/api/edificios/:id/salones', async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const salones = await prisma.salon.findMany({
+      where: { id_edificio: parseInt(id) },
+      orderBy: { piso: 'asc' },
+    });
+
+    return res.json(salones);
+  } catch (error) {
+    console.error('Get salones by edificio error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Create salon (admin)
+app.post('/api/edificios/:id/salones', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { nombre, piso, tipo, activo } = req.body;
+
+    const edificio = await prisma.edificio.findUnique({
+      where: { id_edificio: parseInt(id) },
+    });
+
+    if (!edificio) {
+      return res.status(404).json({ error: 'Edificio no encontrado' });
+    }
+
+    const salon = await prisma.salon.create({
+      data: {
+        id_edificio: parseInt(id),
+        nombre,
+        piso,
+        tipo,
+        activo: activo !== undefined ? activo : true,
+      },
+      include: {
+        edificio: {
+          select: {
+            id_edificio: true,
+            nombre: true,
+            tipo: true,
+          },
+        },
+      },
+    });
+
+    return res.status(201).json(salon);
+  } catch (error) {
+    console.error('Create salon error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Update salon (admin)
+app.put('/api/edificios/salones/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { nombre, piso, tipo, activo, id_edificio } = req.body;
+
+    const existingSalon = await prisma.salon.findUnique({
+      where: { id_salon: parseInt(id) },
+    });
+
+    if (!existingSalon) {
+      return res.status(404).json({ error: 'Salón no encontrado' });
+    }
+
+    const updateData: any = {};
+    if (nombre !== undefined) updateData.nombre = nombre;
+    if (piso !== undefined) updateData.piso = piso;
+    if (tipo !== undefined) updateData.tipo = tipo;
+    if (activo !== undefined) updateData.activo = activo;
+    if (id_edificio !== undefined) updateData.id_edificio = id_edificio;
+
+    const salon = await prisma.salon.update({
+      where: { id_salon: parseInt(id) },
+      data: updateData,
+      include: {
+        edificio: {
+          select: {
+            id_edificio: true,
+            nombre: true,
+            tipo: true,
+          },
+        },
+      },
+    });
+
+    return res.json(salon);
+  } catch (error) {
+    console.error('Update salon error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Delete salon (admin)
+app.delete('/api/edificios/salones/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const existingSalon = await prisma.salon.findUnique({
+      where: { id_salon: parseInt(id) },
+    });
+
+    if (!existingSalon) {
+      return res.status(404).json({ error: 'Salón no encontrado' });
+    }
+
+    await prisma.salon.delete({
+      where: { id_salon: parseInt(id) },
+    });
+
+    return res.json({ message: 'Salón eliminado exitosamente' });
+  } catch (error) {
+    console.error('Delete salon error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Get all profesores
+app.get('/api/profesores', async (req: AuthRequest, res: Response) => {
+  try {
+    const profesores = await prisma.profesores.findMany({
+      include: {
+        usuario: {
+          select: {
+            nombre: true,
+            correo: true,
+          }
+        },
+        cubiculos: {
+          include: {
+            edificio: {
+              select: {
+                id_edificio: true,
+                nombre: true,
+                latitud: true,
+                longitud: true,
+                tipo: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return res.json(profesores);
+  } catch (error) {
+    console.error('Get profesores error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Get single profesor
+app.get('/api/profesores/:id', async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const profesor = await prisma.profesor.findUnique({
+      where: { id_profesor: parseInt(id) },
+      include: {
+        usuario: {
+          select: {
+            nombre: true,
+            correo: true,
+          }
+        },
+        cubiculos: {
+          include: {
+            edificio: true,
+          },
+        },
+      },
+    });
+
+    if (!profesor) {
+      return res.status(404).json({ error: 'Profesor no encontrado' });
+    }
+
+    return res.json(profesor);
+  } catch (error) {
+    console.error('Get profesor error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Create profesor (admin)
+app.post('/api/profesores', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id_usuario, departamento, id_cubiculo, activo } = req.body;
+
+    if (!id_usuario || !departamento) {
+      return res.status(400).json({ error: 'id_usuario y departamento son requeridos' });
+    }
+
+    // Verificar si el usuario existe
+    const usuario = await prisma.usuario.findUnique({
+      where: { id_usuario: parseInt(id_usuario) },
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Verificar si el usuario ya es profesor
+    const existingProfesor = await prisma.profesor.findUnique({
+      where: { id_usuario: parseInt(id_usuario) },
+    });
+
+    if (existingProfesor) {
+      return res.status(400).json({ error: 'El usuario ya es un profesor' });
+    }
+
+    // Verificar que el cubículo existe si se proporciona
+    if (id_cubiculo) {
+      const cubiculo = await prisma.cubiculo.findUnique({
+        where: { id_cubiculo: parseInt(id_cubiculo) },
+      });
+
+      if (!cubiculo) {
+        return res.status(404).json({ error: 'Cubículo no encontrado' });
+      }
+    }
+
+    await prisma.usuario.update({
+      where: { id_usuario: parseInt(id_usuario) },
+      data: { rol: 'profesor' }
+    });
+
+    const profesor = await prisma.profesor.create({
+      data: {
+        id_usuario: parseInt(id_usuario),
+        departamento,
+        activo: activo !== undefined ? activo : true,
+      },
+      include: {
+        usuario: {
+          select: { nombre: true, correo: true }
+        },
+        cubiculos: {
+          include: {
+            edificio: {
+              select: {
+                id_edificio: true,
+                nombre: true,
+                latitud: true,
+                longitud: true,
+                tipo: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (id_cubiculo) {
+      await prisma.cubiculo.update({
+        where: { id_cubiculo: parseInt(id_cubiculo) },
+        data: { id_profesor: profesor.id_profesor }
+      });
+    }
+
+    return res.status(201).json(profesor);
+  } catch (error) {
+    console.error('Create profesor error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Update profesor (admin)
+app.put('/api/profesores/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { departamento, id_cubiculo, activo } = req.body;
+
+    const existingProfesor = await prisma.profesor.findUnique({
+      where: { id_profesor: parseInt(id) },
+    });
+
+    if (!existingProfesor) {
+      return res.status(404).json({ error: 'Profesor no encontrado' });
+    }
+
+    // Verificar que el cubículo existe si se proporciona
+    if (id_cubiculo) {
+      const cubiculo = await prisma.cubiculo.findUnique({
+        where: { id_cubiculo: parseInt(id_cubiculo) },
+      });
+
+      if (!cubiculo) {
+        return res.status(404).json({ error: 'Cubículo no encontrado' });
+      }
+    }
+
+    const updateData: any = {};
+    if (departamento !== undefined) updateData.departamento = departamento;
+    if (activo !== undefined) updateData.activo = activo;
+
+    const profesor = await prisma.profesor.update({
+      where: { id_profesor: parseInt(id) },
+      data: updateData,
+      include: {
+        usuario: {
+          select: { nombre: true, correo: true }
+        },
+        cubiculos: {
+          include: {
+            edificio: {
+              select: {
+                id_edificio: true,
+                nombre: true,
+                latitud: true,
+                longitud: true,
+                tipo: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (id_cubiculo) {
+      await prisma.cubiculo.update({
+        where: { id_cubiculo: parseInt(id_cubiculo) },
+        data: { id_profesor: profesor.id_profesor }
+      });
+    }
+
+    return res.json(profesor);
+  } catch (error) {
+    console.error('Update profesor error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Delete profesor (admin)
+app.delete('/api/profesores/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const existingProfesor = await prisma.profesor.findUnique({
+      where: { id_profesor: parseInt(id) },
+    });
+
+    if (!existingProfesor) {
+      return res.status(404).json({ error: 'Profesor no encontrado' });
+    }
+
+    await prisma.profesor.delete({
+      where: { id_profesor: parseInt(id) },
+    });
+
+    return res.json({ message: 'Profesor eliminado exitosamente' });
+  } catch (error) {
+    console.error('Delete profesor error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Dashboard
 app.get('/api/analytics/dashboard', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
@@ -1097,6 +1599,45 @@ app.get('/api/analytics/rutas-populares', authenticate, requireAdmin, async (req
   }
 });
 
+// Map Data Endpoint
+app.get('/api/mapa/data', async (req: Request, res: Response) => {
+  try {
+    const edificios = await prisma.edificio.findMany({ where: { activo: true } });
+    const caminos = await prisma.caminoGeografico.findMany({ where: { activo: true } });
+
+    const geojson = {
+      type: "FeatureCollection",
+      features: [
+        ...edificios.map(b => ({
+          type: "Feature",
+          properties: {
+            name: b.nombre,
+            type: 'building',
+            id: b.id_edificio,
+            descripcion: b.descripcion
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [Number(b.longitud), Number(b.latitud)] // GeoJSON is [lng, lat]
+          }
+        })),
+        ...caminos.map(c => ({
+          type: "Feature",
+          properties: {
+            type: c.tipo,
+            id: c.id_camino
+          },
+          geometry: c.geometria
+        }))
+      ]
+    };
+    res.json(geojson);
+  } catch (error) {
+    console.error('Error fetching map data:', error);
+    res.status(500).json({ error: 'Error interno del servidor al cargar mapas' });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
@@ -1130,3 +1671,86 @@ app.listen(PORT, () => {
 });
 
 export default app;
+
+
+/*
+async function validarYCrearEvento(data: {
+  id_usuario: number;
+  id_edificio: number;
+  nombre: string;
+  descripcion?: string;
+  inicio: Date;
+  fin: Date;
+}) {
+  const { id_usuario, id_edificio, nombre, descripcion, inicio, fin } = data;
+
+  return await prisma.$transaction(async (tx) => {
+    // 1. Obtener los datos del usuario que intenta crear el evento
+    const usuario = await tx.usuario.findUnique({
+      where: { id_usuario },
+      select: { prioridad: true, rol: true }
+    });
+
+    if (!usuario) throw new Error("Usuario no encontrado");
+
+    // 2. Buscar si hay un evento activo que se traslape en ese edificio
+    // Lógica de traslape: (Inicio1 < Fin2) Y (Fin1 > Inicio2)
+    const eventoConflicto = await tx.evento.findFirst({
+      where: {
+        id_edificio,
+        activo: true,
+        AND: [
+          { fecha_inicio: { lt: fin } },
+          { fecha_fin: { gt: inicio } }
+        ]
+      },
+      include: {
+        creador: true // Para comparar prioridades
+      }
+    });
+
+    // 3. Evaluar el conflicto
+    if (eventoConflicto) {
+      // REGLA: Menor número es mayor prioridad (Rector: 1 < Alumno: 4)
+      const tienePrioridad = usuario.prioridad < eventoConflicto.prioridad_evento;
+
+      if (tienePrioridad) {
+        // PISAR EL EVENTO: Desactivamos el anterior
+        await tx.evento.update({
+          where: { id_evento: eventoConflicto.id_evento },
+          data: { activo: false }
+        });
+        
+        console.log(`Evento "${eventoConflicto.nombre}" desplazado por jerarquía (${usuario.rol}).`);
+      } else {
+        // BLOQUEAR: El usuario actual no tiene rango suficiente
+        throw new Error(
+          `Conflicto: El lugar está ocupado por un evento de mayor o igual rango (${eventoConflicto.creador.rol}).`
+        );
+      }
+    }
+
+    // 4. Crear el nuevo evento (si no hubo conflicto o si se ganó por prioridad)
+    const nuevoEvento = await tx.evento.create({
+      data: {
+        nombre,
+        descripcion,
+        fecha_inicio: inicio,
+        fecha_fin: fin,
+        id_edificio,
+        id_creador: id_usuario,
+        prioridad_evento: usuario.prioridad, // Hereda la prioridad del usuario
+        activo: true
+      }
+    });
+
+    return {
+      success: true,
+      mensaje: eventoConflicto ? "Evento creado desplazando al anterior" : "Evento creado exitosamente",
+      evento: nuevoEvento
+    };
+  });
+}
+
+
+*/
