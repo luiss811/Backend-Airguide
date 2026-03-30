@@ -1599,7 +1599,6 @@ app.get('/api/analytics/rutas-populares', authenticate, requireAdmin, async (req
   }
 });
 
-// Map Data Endpoint
 app.get('/api/mapa/data', async (req: Request, res: Response) => {
   try {
     const edificios = await prisma.edificio.findMany({ where: { activo: true } });
@@ -1618,7 +1617,7 @@ app.get('/api/mapa/data', async (req: Request, res: Response) => {
           },
           geometry: {
             type: "Point",
-            coordinates: [Number(b.longitud), Number(b.latitud)] // GeoJSON is [lng, lat]
+            coordinates: [Number(b.longitud), Number(b.latitud)]
           }
         })),
         ...caminos.map(c => ({
@@ -1635,6 +1634,48 @@ app.get('/api/mapa/data', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching map data:', error);
     res.status(500).json({ error: 'Error interno del servidor al cargar mapas' });
+  }
+});
+
+app.post('/api/google/compute-route', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { originCoords, destinationCoords, routingPreference = 'TRAFFIC_UNAWARE' } = req.body;
+
+    if (!originCoords || !destinationCoords) {
+      return res.status(400).json({ error: 'Faltan coordenadas de origen o destino' });
+    }
+
+    const apiKey = process.env.GOOGLE_ROUTES_API_KEY;
+
+    const response = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey as string,
+        'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline'
+      },
+      body: JSON.stringify({
+        origin: { location: { latLng: originCoords } },
+        destination: { location: { latLng: destinationCoords } },
+        travelMode: 'WALK',
+        routingPreference: routingPreference,
+        computeAlternativeRoutes: false,
+        languageCode: 'es-MX',
+        units: 'METRIC'
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error('Error en Google Maps API');
+    }
+
+    return res.json(data);
+    
+  } catch (error: any) {
+    console.error('Error al calcular ruta con Google:', error);
+    return res.status(500).json({ error: 'No se pudo calcular la ruta' });
   }
 });
 
@@ -1671,86 +1712,3 @@ app.listen(PORT, () => {
 });
 
 export default app;
-
-
-/*
-async function validarYCrearEvento(data: {
-  id_usuario: number;
-  id_edificio: number;
-  nombre: string;
-  descripcion?: string;
-  inicio: Date;
-  fin: Date;
-}) {
-  const { id_usuario, id_edificio, nombre, descripcion, inicio, fin } = data;
-
-  return await prisma.$transaction(async (tx) => {
-    // 1. Obtener los datos del usuario que intenta crear el evento
-    const usuario = await tx.usuario.findUnique({
-      where: { id_usuario },
-      select: { prioridad: true, rol: true }
-    });
-
-    if (!usuario) throw new Error("Usuario no encontrado");
-
-    // 2. Buscar si hay un evento activo que se traslape en ese edificio
-    // Lógica de traslape: (Inicio1 < Fin2) Y (Fin1 > Inicio2)
-    const eventoConflicto = await tx.evento.findFirst({
-      where: {
-        id_edificio,
-        activo: true,
-        AND: [
-          { fecha_inicio: { lt: fin } },
-          { fecha_fin: { gt: inicio } }
-        ]
-      },
-      include: {
-        creador: true // Para comparar prioridades
-      }
-    });
-
-    // 3. Evaluar el conflicto
-    if (eventoConflicto) {
-      // REGLA: Menor número es mayor prioridad (Rector: 1 < Alumno: 4)
-      const tienePrioridad = usuario.prioridad < eventoConflicto.prioridad_evento;
-
-      if (tienePrioridad) {
-        // PISAR EL EVENTO: Desactivamos el anterior
-        await tx.evento.update({
-          where: { id_evento: eventoConflicto.id_evento },
-          data: { activo: false }
-        });
-        
-        console.log(`Evento "${eventoConflicto.nombre}" desplazado por jerarquía (${usuario.rol}).`);
-      } else {
-        // BLOQUEAR: El usuario actual no tiene rango suficiente
-        throw new Error(
-          `Conflicto: El lugar está ocupado por un evento de mayor o igual rango (${eventoConflicto.creador.rol}).`
-        );
-      }
-    }
-
-    // 4. Crear el nuevo evento (si no hubo conflicto o si se ganó por prioridad)
-    const nuevoEvento = await tx.evento.create({
-      data: {
-        nombre,
-        descripcion,
-        fecha_inicio: inicio,
-        fecha_fin: fin,
-        id_edificio,
-        id_creador: id_usuario,
-        prioridad_evento: usuario.prioridad, // Hereda la prioridad del usuario
-        activo: true
-      }
-    });
-
-    return {
-      success: true,
-      mensaje: eventoConflicto ? "Evento creado desplazando al anterior" : "Evento creado exitosamente",
-      evento: nuevoEvento
-    };
-  });
-}
-
-
-*/
