@@ -134,6 +134,27 @@ async function main() {
             activo: true,
         },
     });
+    await prisma.edificio.createMany({
+        data: [
+            { nombre: 'Laboratorio de Informatica', descripcion: 'Laboratorios de Informatica', latitud: 20.65504650, longitud: -100.4048393, tipo: 'academico', activo: true },
+            { nombre: 'Desarrollo de Negocios', descripcion: 'Edificio de la carrera de Desarrollo de Negocios', latitud: 20.65557680, longitud: -100.404108, tipo: 'academico', activo: true },
+            { nombre: 'Enfermeria', descripcion: 'Consultorio médico y atención para enfermería', latitud: 20.65529820, longitud: -100.4052232, tipo: 'administrativo', activo: true },
+            { nombre: 'Division Tecnologica Ambiental', descripcion: 'Edificio para la carrera de Tecnología Ambiental', latitud: 20.65524450, longitud: -100.4049124, tipo: 'academico', activo: true },
+            { nombre: 'Nanotecnologia y Laboratorios', descripcion: 'División de Nanotecnología', latitud: 20.65585590, longitud: -100.4050987, tipo: 'academico', activo: true },
+            { nombre: 'cafe', descripcion: 'Cafetería de la universidad', latitud: 20.65484000, longitud: -100.4051103, tipo: 'recreativo', activo: true },
+            { nombre: 'Division Administrativa', descripcion: 'División Administrativa', latitud: 20.65374540, longitud: -100.4054644, tipo: 'academico', activo: true },
+            { nombre: 'Laboratorios de Procesos Industriales', descripcion: 'Laboratorios para la carrera de Procesos Industriales', latitud: 20.65408840, longitud: -100.404852, tipo: 'academico', activo: true },
+            { nombre: 'Almacen General', descripcion: 'Almacenamiento de equipos y recursos de la universidad', latitud: 20.65608080, longitud: -100.4039396, tipo: 'administrativo', activo: true },
+            { nombre: 'Stellantis', descripcion: 'Laboratorio automotriz en colaboración con Stellantis', latitud: 20.65660940, longitud: -100.4038571, tipo: 'academico', activo: true },
+            { nombre: 'Edificio PIDET', descripcion: 'Programa de Innovación y Desarrollo Tecnológico', latitud: 20.65739520, longitud: -100.4037716, tipo: 'academico', activo: true },
+            { nombre: 'Edificio CISCO', descripcion: 'Edificio de CISCO', latitud: 20.65772030, longitud: -100.4038269, tipo: 'academico', activo: true },
+            { nombre: 'Edificio de Vinculaciones', descripcion: 'Oficinas para gestión de prácticas y vinculación', latitud: 20.65403630, longitud: -100.4063, tipo: 'administrativo', activo: true },
+            { nombre: 'Actividades Culturales', descripcion: 'Espacios para el desarrollo de actividades culturales', latitud: 20.65465490, longitud: -100.4064146, tipo: 'recreativo', activo: true },
+            { nombre: 'Salón de canto', descripcion: 'Aula acondicionada para prácticas de canto', latitud: 20.65455470, longitud: -100.4065595, tipo: 'recreativo', activo: true },
+            { nombre: 'Laboratorio de Mecatronica', descripcion: 'Complejo de laboratorios de robótica y mecatrónica', latitud: 20.65531850, longitud: -100.4058899, tipo: 'academico', activo: true },
+            { nombre: 'Edificio de Idiomas', descripcion: 'División de lenguas extranjeras', latitud: 20.65516370, longitud: -100.4066365, tipo: 'academico', activo: true },
+        ],
+    });
     await prisma.salon.createMany({
         data: [
             { id_edificio: biblioteca.id_edificio, nombre: 'Sala de Computo', piso: 1, tipo: 'laboratorio', activo: false },

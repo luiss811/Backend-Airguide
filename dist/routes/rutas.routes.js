@@ -37,7 +37,7 @@ router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const ruta = await prisma.ruta.findUnique({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
             include: {
                 detalles: {
                     orderBy: { orden: 'asc' },
@@ -125,13 +125,13 @@ router.put('/:id', authenticate, requireAdmin, async (req, res) => {
         const { id } = req.params;
         const data = updateRutaSchema.parse(req.body);
         const existingRuta = await prisma.ruta.findUnique({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
         });
         if (!existingRuta) {
             return res.status(404).json({ error: 'Ruta no encontrada' });
         }
         const ruta = await prisma.ruta.update({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
             data,
             include: {
                 detalles: {
@@ -154,13 +154,13 @@ router.delete('/:id', authenticate, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const existingRuta = await prisma.ruta.findUnique({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
         });
         if (!existingRuta) {
             return res.status(404).json({ error: 'Ruta no encontrada' });
         }
         await prisma.ruta.delete({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
         });
         return res.json({ message: 'Ruta eliminada exitosamente' });
     }
@@ -175,14 +175,14 @@ router.post('/:id/detalles', authenticate, requireAdmin, async (req, res) => {
         const { id } = req.params;
         const data = createRutaDetalleSchema.parse(req.body);
         const ruta = await prisma.ruta.findUnique({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
         });
         if (!ruta) {
             return res.status(404).json({ error: 'Ruta no encontrada' });
         }
         const detalle = await prisma.rutaDetalle.create({
             data: {
-                id_ruta: parseInt(id),
+                id_ruta: Number(id),
                 orden: data.orden,
                 instruccion: data.instruccion,
                 latitud: data.latitud,
@@ -204,13 +204,13 @@ router.delete('/detalles/:id', authenticate, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const existingDetalle = await prisma.rutaDetalle.findUnique({
-            where: { id_detalle: parseInt(id) },
+            where: { id_detalle: Number(id) },
         });
         if (!existingDetalle) {
             return res.status(404).json({ error: 'Detalle no encontrado' });
         }
         await prisma.rutaDetalle.delete({
-            where: { id_detalle: parseInt(id) },
+            where: { id_detalle: Number(id) },
         });
         return res.json({ message: 'Detalles modificados' });
     }

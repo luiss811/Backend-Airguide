@@ -12,6 +12,7 @@ import { loginSchema, registerSchema } from './validators/auth.validator.js';
 import { createEdificioSchema, updateEdificioSchema } from './validators/edificio.validator.js';
 import { createEventoSchema, updateEventoSchema } from './validators/evento.validator.js';
 import { createRutaSchema, updateRutaSchema, createRutaDetalleSchema } from './validators/ruta.validator.js';
+import { evaluarEvento } from './lib/eventoNeurona.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config();
@@ -226,7 +227,7 @@ app.post('/api/auth/register', async (req, res) => {
         const usuario = await prisma.usuario.create({
             data: {
                 correo,
-                matricula: matricula,
+                matricula: matricula ?? "",
                 password_hash: hashedPassword,
                 nombre,
                 rol: 'alumno',
@@ -289,7 +290,7 @@ app.put('/api/auth/validate/:id', authenticate, requireAdmin, async (req, res) =
             return res.status(400).json({ error: 'Estado inválido' });
         }
         const usuario = await prisma.usuario.update({
-            where: { id_usuario: parseInt(id) },
+            where: { id_usuario: Number(id) },
             data: {
                 estado,
                 fecha_validacion: new Date(),
@@ -382,7 +383,7 @@ app.get('/api/edificios/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const edificio = await prisma.edificio.findUnique({
-            where: { id_edificio: parseInt(id) },
+            where: { id_edificio: Number(id) },
             include: {
                 salones: {
                     where: { activo: true },
@@ -444,13 +445,13 @@ app.put('/api/edificios/:id', authenticate, requireAdmin, async (req, res) => {
         const { id } = req.params;
         const data = updateEdificioSchema.parse(req.body);
         const existingEdificio = await prisma.edificio.findUnique({
-            where: { id_edificio: parseInt(id) },
+            where: { id_edificio: Number(id) },
         });
         if (!existingEdificio) {
             return res.status(404).json({ error: 'Edificio no encontrado' });
         }
         const edificio = await prisma.edificio.update({
-            where: { id_edificio: parseInt(id) },
+            where: { id_edificio: Number(id) },
             data,
         });
         return res.json(edificio);
@@ -468,13 +469,13 @@ app.delete('/api/edificios/:id', authenticate, requireAdmin, async (req, res) =>
     try {
         const { id } = req.params;
         const existingEdificio = await prisma.edificio.findUnique({
-            where: { id_edificio: parseInt(id) },
+            where: { id_edificio: Number(id) },
         });
         if (!existingEdificio) {
             return res.status(404).json({ error: 'Edificio no encontrado' });
         }
         await prisma.edificio.delete({
-            where: { id_edificio: parseInt(id) },
+            where: { id_edificio: Number(id) },
         });
         return res.json({ message: 'Edificio eliminado exitosamente' });
     }
@@ -519,7 +520,7 @@ app.get('/api/eventos/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const evento = await prisma.evento.findUnique({
-            where: { id_evento: parseInt(id) },
+            where: { id_evento: Number(id) },
             include: {
                 edificio: true,
             },
@@ -544,6 +545,22 @@ app.post('/api/eventos', authenticate, requireAdmin, async (req, res) => {
         if (!edificio) {
             return res.status(404).json({ error: 'Edificio no encontrado' });
         }
+        const creadorId = parseInt(req.user.userId);
+        const usuarioCreador = await prisma.usuario.findUnique({
+            where: { id_usuario: creadorId }
+        });
+        let prioridadVal = usuarioCreador?.prioridad || 3;
+        if (usuarioCreador?.rol === 'rector')
+            prioridadVal = 4;
+        else if (usuarioCreador?.rol === 'profesor')
+            prioridadVal = 3;
+        const evaluacion = await evaluarEvento({
+            ...data,
+            prioridad: prioridadVal
+        });
+        if (!evaluacion.permitir) {
+            return res.status(409).json({ error: evaluacion.mensaje });
+        }
         const evento = await prisma.evento.create({
             data: {
                 nombre: data.nombre,
@@ -553,13 +570,18 @@ app.post('/api/eventos', authenticate, requireAdmin, async (req, res) => {
                 id_edificio: data.id_edificio,
                 publico: data.publico ?? true,
                 activo: data.activo ?? true,
-                id_creador: parseInt(req.user.userId),
+                id_creador: creadorId,
+                prioridad_evento: prioridadVal
             },
             include: {
                 edificio: true,
             },
         });
-        return res.status(201).json(evento);
+        const responsePayload = { ...evento };
+        if (evaluacion.tipo === "DESPLAZAMIENTO_REALIZADO") {
+            responsePayload.warning = "El evento fue agendado. Nuestro modelo de IA desplazó automáticamente otro(s) evento(s) de menor prioridad a otras sedes disponibles.";
+        }
+        return res.status(201).json(responsePayload);
     }
     catch (error) {
         if (error.name === 'ZodError') {
@@ -575,7 +597,7 @@ app.put('/api/eventos/:id', authenticate, requireAdmin, async (req, res) => {
         const { id } = req.params;
         const data = updateEventoSchema.parse(req.body);
         const existingEvento = await prisma.evento.findUnique({
-            where: { id_evento: parseInt(id) },
+            where: { id_evento: Number(id) },
         });
         if (!existingEvento) {
             return res.status(404).json({ error: 'Evento no encontrado' });
@@ -603,8 +625,28 @@ app.put('/api/eventos/:id', authenticate, requireAdmin, async (req, res) => {
             updateData.publico = data.publico;
         if (data.activo !== undefined)
             updateData.activo = data.activo;
+        const creadorId = Number(req.user.userId);
+        const usuarioCreador = await prisma.usuario.findUnique({
+            where: { id_usuario: creadorId }
+        });
+        let prioridadVal = usuarioCreador?.prioridad || 3;
+        if (usuarioCreador?.rol === 'rector')
+            prioridadVal = 4;
+        else if (usuarioCreador?.rol === 'profesor')
+            prioridadVal = 3;
+        if (data.fecha_inicio || data.fecha_fin || data.id_edificio) {
+            const dummyEvento = {
+                ...existingEvento,
+                ...updateData,
+                prioridad: prioridadVal
+            };
+            const evaluacion = await evaluarEvento(dummyEvento);
+            if (!evaluacion.permitir) {
+                return res.status(409).json({ error: evaluacion.mensaje });
+            }
+        }
         const evento = await prisma.evento.update({
-            where: { id_evento: parseInt(id) },
+            where: { id_evento: Number(id) },
             data: updateData,
             include: {
                 edificio: true,
@@ -625,13 +667,13 @@ app.delete('/api/eventos/:id', authenticate, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const existingEvento = await prisma.evento.findUnique({
-            where: { id_evento: parseInt(id) },
+            where: { id_evento: Number(id) },
         });
         if (!existingEvento) {
             return res.status(404).json({ error: 'Evento no encontrado' });
         }
         await prisma.evento.delete({
-            where: { id_evento: parseInt(id) },
+            where: { id_evento: Number(id) },
         });
         return res.json({ message: 'Evento eliminado exitosamente' });
     }
@@ -674,7 +716,7 @@ app.get('/api/rutas/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const ruta = await prisma.ruta.findUnique({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
             include: {
                 detalles: {
                     orderBy: { orden: 'asc' },
@@ -761,13 +803,13 @@ app.put('/api/rutas/:id', authenticate, requireAdmin, async (req, res) => {
         const { id } = req.params;
         const data = updateRutaSchema.parse(req.body);
         const existingRuta = await prisma.ruta.findUnique({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
         });
         if (!existingRuta) {
             return res.status(404).json({ error: 'Ruta no encontrada' });
         }
         const ruta = await prisma.ruta.update({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
             data,
             include: {
                 detalles: {
@@ -790,13 +832,13 @@ app.delete('/api/rutas/:id', authenticate, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const existingRuta = await prisma.ruta.findUnique({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
         });
         if (!existingRuta) {
             return res.status(404).json({ error: 'Ruta no encontrada' });
         }
         await prisma.ruta.delete({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
         });
         return res.json({ message: 'Ruta eliminada exitosamente' });
     }
@@ -811,14 +853,14 @@ app.post('/api/rutas/:id/detalles', authenticate, requireAdmin, async (req, res)
         const { id } = req.params;
         const data = createRutaDetalleSchema.parse(req.body);
         const ruta = await prisma.ruta.findUnique({
-            where: { id_ruta: parseInt(id) },
+            where: { id_ruta: Number(id) },
         });
         if (!ruta) {
             return res.status(404).json({ error: 'Ruta no encontrada' });
         }
         const detalle = await prisma.rutaDetalle.create({
             data: {
-                id_ruta: parseInt(id),
+                id_ruta: Number(id),
                 orden: data.orden,
                 instruccion: data.instruccion,
                 latitud: data.latitud,
@@ -840,13 +882,13 @@ app.delete('/api/rutas/detalles/:id', authenticate, requireAdmin, async (req, re
     try {
         const { id } = req.params;
         const existingDetalle = await prisma.rutaDetalle.findUnique({
-            where: { id_detalle: parseInt(id) },
+            where: { id_detalle: Number(id) },
         });
         if (!existingDetalle) {
             return res.status(404).json({ error: 'Detalle no encontrado' });
         }
         await prisma.rutaDetalle.delete({
-            where: { id_detalle: parseInt(id) },
+            where: { id_detalle: Number(id) },
         });
         return res.json({ message: 'Detalle eliminado' });
     }
@@ -885,7 +927,7 @@ app.get('/api/edificios/:id/salones', async (req, res) => {
     try {
         const { id } = req.params;
         const salones = await prisma.salon.findMany({
-            where: { id_edificio: parseInt(id) },
+            where: { id_edificio: Number(id) },
             orderBy: { piso: 'asc' },
         });
         return res.json(salones);
@@ -901,14 +943,14 @@ app.post('/api/edificios/:id/salones', authenticate, requireAdmin, async (req, r
         const { id } = req.params;
         const { nombre, piso, tipo, activo } = req.body;
         const edificio = await prisma.edificio.findUnique({
-            where: { id_edificio: parseInt(id) },
+            where: { id_edificio: Number(id) },
         });
         if (!edificio) {
             return res.status(404).json({ error: 'Edificio no encontrado' });
         }
         const salon = await prisma.salon.create({
             data: {
-                id_edificio: parseInt(id),
+                id_edificio: Number(id),
                 nombre,
                 piso,
                 tipo,
@@ -937,7 +979,7 @@ app.put('/api/edificios/salones/:id', authenticate, requireAdmin, async (req, re
         const { id } = req.params;
         const { nombre, piso, tipo, activo, id_edificio } = req.body;
         const existingSalon = await prisma.salon.findUnique({
-            where: { id_salon: parseInt(id) },
+            where: { id_salon: Number(id) },
         });
         if (!existingSalon) {
             return res.status(404).json({ error: 'Salón no encontrado' });
@@ -954,7 +996,7 @@ app.put('/api/edificios/salones/:id', authenticate, requireAdmin, async (req, re
         if (id_edificio !== undefined)
             updateData.id_edificio = id_edificio;
         const salon = await prisma.salon.update({
-            where: { id_salon: parseInt(id) },
+            where: { id_salon: Number(id) },
             data: updateData,
             include: {
                 edificio: {
@@ -978,13 +1020,13 @@ app.delete('/api/edificios/salones/:id', authenticate, requireAdmin, async (req,
     try {
         const { id } = req.params;
         const existingSalon = await prisma.salon.findUnique({
-            where: { id_salon: parseInt(id) },
+            where: { id_salon: Number(id) },
         });
         if (!existingSalon) {
             return res.status(404).json({ error: 'Salón no encontrado' });
         }
         await prisma.salon.delete({
-            where: { id_salon: parseInt(id) },
+            where: { id_salon: Number(id) },
         });
         return res.json({ message: 'Salón eliminado exitosamente' });
     }
@@ -996,7 +1038,7 @@ app.delete('/api/edificios/salones/:id', authenticate, requireAdmin, async (req,
 // Get all profesores
 app.get('/api/profesores', async (req, res) => {
     try {
-        const profesores = await prisma.profesores.findMany({
+        const profesor = await prisma.profesor.findMany({
             include: {
                 usuario: {
                     select: {
@@ -1019,7 +1061,7 @@ app.get('/api/profesores', async (req, res) => {
                 },
             },
         });
-        return res.json(profesores);
+        return res.json(profesor);
     }
     catch (error) {
         console.error('Get profesores error:', error);
@@ -1031,7 +1073,7 @@ app.get('/api/profesores/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const profesor = await prisma.profesor.findUnique({
-            where: { id_profesor: parseInt(id) },
+            where: { id_profesor: Number(id) },
             include: {
                 usuario: {
                     select: {
@@ -1134,7 +1176,7 @@ app.put('/api/profesores/:id', authenticate, requireAdmin, async (req, res) => {
         const { id } = req.params;
         const { departamento, id_cubiculo, activo } = req.body;
         const existingProfesor = await prisma.profesor.findUnique({
-            where: { id_profesor: parseInt(id) },
+            where: { id_profesor: Number(id) },
         });
         if (!existingProfesor) {
             return res.status(404).json({ error: 'Profesor no encontrado' });
@@ -1142,7 +1184,7 @@ app.put('/api/profesores/:id', authenticate, requireAdmin, async (req, res) => {
         // Verificar que el cubículo existe si se proporciona
         if (id_cubiculo) {
             const cubiculo = await prisma.cubiculo.findUnique({
-                where: { id_cubiculo: parseInt(id_cubiculo) },
+                where: { id_cubiculo: Number(id_cubiculo) },
             });
             if (!cubiculo) {
                 return res.status(404).json({ error: 'Cubículo no encontrado' });
@@ -1154,7 +1196,7 @@ app.put('/api/profesores/:id', authenticate, requireAdmin, async (req, res) => {
         if (activo !== undefined)
             updateData.activo = activo;
         const profesor = await prisma.profesor.update({
-            where: { id_profesor: parseInt(id) },
+            where: { id_profesor: Number(id) },
             data: updateData,
             include: {
                 usuario: {
@@ -1193,13 +1235,13 @@ app.delete('/api/profesores/:id', authenticate, requireAdmin, async (req, res) =
     try {
         const { id } = req.params;
         const existingProfesor = await prisma.profesor.findUnique({
-            where: { id_profesor: parseInt(id) },
+            where: { id_profesor: Number(id) },
         });
         if (!existingProfesor) {
             return res.status(404).json({ error: 'Profesor no encontrado' });
         }
         await prisma.profesor.delete({
-            where: { id_profesor: parseInt(id) },
+            where: { id_profesor: Number(id) },
         });
         return res.json({ message: 'Profesor eliminado exitosamente' });
     }
@@ -1420,7 +1462,6 @@ app.get('/api/analytics/rutas-populares', authenticate, requireAdmin, async (req
         return res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
-// Map Data Endpoint
 app.get('/api/mapa/data', async (req, res) => {
     try {
         const edificios = await prisma.edificio.findMany({ where: { activo: true } });
@@ -1438,7 +1479,7 @@ app.get('/api/mapa/data', async (req, res) => {
                     },
                     geometry: {
                         type: "Point",
-                        coordinates: [Number(b.longitud), Number(b.latitud)] // GeoJSON is [lng, lat]
+                        coordinates: [Number(b.longitud), Number(b.latitud)]
                     }
                 })),
                 ...caminos.map(c => ({
@@ -1456,6 +1497,41 @@ app.get('/api/mapa/data', async (req, res) => {
     catch (error) {
         console.error('Error fetching map data:', error);
         res.status(500).json({ error: 'Error interno del servidor al cargar mapas' });
+    }
+});
+app.post('/api/google/compute-route', authenticate, async (req, res) => {
+    try {
+        const { originCoords, destinationCoords, routingPreference = 'TRAFFIC_UNAWARE' } = req.body;
+        if (!originCoords || !destinationCoords) {
+            return res.status(400).json({ error: 'Faltan coordenadas de origen o destino' });
+        }
+        const apiKey = process.env.GOOGLE_ROUTES_API_KEY;
+        const response = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Goog-Api-Key': apiKey,
+                'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline'
+            },
+            body: JSON.stringify({
+                origin: { location: { latLng: originCoords } },
+                destination: { location: { latLng: destinationCoords } },
+                travelMode: 'WALK',
+                routingPreference: routingPreference,
+                computeAlternativeRoutes: false,
+                languageCode: 'es-MX',
+                units: 'METRIC'
+            })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error('Error en Google Maps API');
+        }
+        return res.json(data);
+    }
+    catch (error) {
+        console.error('Error al calcular ruta con Google:', error);
+        return res.status(500).json({ error: 'No se pudo calcular la ruta' });
     }
 });
 app.get('*', (req, res) => {
@@ -1487,85 +1563,4 @@ app.listen(PORT, () => {
   `);
 });
 export default app;
-/*
-async function validarYCrearEvento(data: {
-  id_usuario: number;
-  id_edificio: number;
-  nombre: string;
-  descripcion?: string;
-  inicio: Date;
-  fin: Date;
-}) {
-  const { id_usuario, id_edificio, nombre, descripcion, inicio, fin } = data;
-
-  return await prisma.$transaction(async (tx) => {
-    // 1. Obtener los datos del usuario que intenta crear el evento
-    const usuario = await tx.usuario.findUnique({
-      where: { id_usuario },
-      select: { prioridad: true, rol: true }
-    });
-
-    if (!usuario) throw new Error("Usuario no encontrado");
-
-    // 2. Buscar si hay un evento activo que se traslape en ese edificio
-    // Lógica de traslape: (Inicio1 < Fin2) Y (Fin1 > Inicio2)
-    const eventoConflicto = await tx.evento.findFirst({
-      where: {
-        id_edificio,
-        activo: true,
-        AND: [
-          { fecha_inicio: { lt: fin } },
-          { fecha_fin: { gt: inicio } }
-        ]
-      },
-      include: {
-        creador: true // Para comparar prioridades
-      }
-    });
-
-    // 3. Evaluar el conflicto
-    if (eventoConflicto) {
-      // REGLA: Menor número es mayor prioridad (Rector: 1 < Alumno: 4)
-      const tienePrioridad = usuario.prioridad < eventoConflicto.prioridad_evento;
-
-      if (tienePrioridad) {
-        // PISAR EL EVENTO: Desactivamos el anterior
-        await tx.evento.update({
-          where: { id_evento: eventoConflicto.id_evento },
-          data: { activo: false }
-        });
-        
-        console.log(`Evento "${eventoConflicto.nombre}" desplazado por jerarquía (${usuario.rol}).`);
-      } else {
-        // BLOQUEAR: El usuario actual no tiene rango suficiente
-        throw new Error(
-          `Conflicto: El lugar está ocupado por un evento de mayor o igual rango (${eventoConflicto.creador.rol}).`
-        );
-      }
-    }
-
-    // 4. Crear el nuevo evento (si no hubo conflicto o si se ganó por prioridad)
-    const nuevoEvento = await tx.evento.create({
-      data: {
-        nombre,
-        descripcion,
-        fecha_inicio: inicio,
-        fecha_fin: fin,
-        id_edificio,
-        id_creador: id_usuario,
-        prioridad_evento: usuario.prioridad, // Hereda la prioridad del usuario
-        activo: true
-      }
-    });
-
-    return {
-      success: true,
-      mensaje: eventoConflicto ? "Evento creado desplazando al anterior" : "Evento creado exitosamente",
-      evento: nuevoEvento
-    };
-  });
-}
-
-
-*/ 
 //# sourceMappingURL=server.js.map

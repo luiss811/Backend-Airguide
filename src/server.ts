@@ -12,6 +12,7 @@ import { loginSchema, registerSchema } from './validators/auth.validator.js';
 import { createEdificioSchema, updateEdificioSchema } from './validators/edificio.validator.js';
 import { createEventoSchema, updateEventoSchema } from './validators/evento.validator.js';
 import { createRutaSchema, updateRutaSchema, createRutaDetalleSchema } from './validators/ruta.validator.js';
+import { evaluarEvento } from './lib/eventoNeurona.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,7 +25,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://airguide.vercel.app',
+    'https://airguide-lac.vercel.app',
     'https://*.vercel.app'
   ],
   credentials: true,
@@ -628,6 +629,24 @@ app.post('/api/eventos', authenticate, requireAdmin, async (req: AuthRequest, re
       return res.status(404).json({ error: 'Edificio no encontrado' });
     }
 
+    const creadorId = parseInt(req.user!.userId);
+    const usuarioCreador = await prisma.usuario.findUnique({
+      where: { id_usuario: creadorId }
+    });
+    
+    let prioridadVal = usuarioCreador?.prioridad || 3;
+    if (usuarioCreador?.rol === 'rector') prioridadVal = 4;
+    else if (usuarioCreador?.rol === 'profesor') prioridadVal = 3;
+
+    const evaluacion = await evaluarEvento({
+      ...data,
+      prioridad: prioridadVal
+    });
+
+    if (!evaluacion.permitir) {
+      return res.status(409).json({ error: evaluacion.mensaje });
+    }
+
     const evento = await prisma.evento.create({
       data: {
         nombre: data.nombre,
@@ -637,14 +656,20 @@ app.post('/api/eventos', authenticate, requireAdmin, async (req: AuthRequest, re
         id_edificio: data.id_edificio,
         publico: data.publico ?? true,
         activo: data.activo ?? true,
-        id_creador: parseInt(req.user!.userId),
+        id_creador: creadorId,
+        prioridad_evento: prioridadVal
       },
       include: {
         edificio: true,
       },
     });
 
-    return res.status(201).json(evento);
+    const responsePayload = { ...evento } as any;
+    if (evaluacion.tipo === "DESPLAZAMIENTO_REALIZADO") {
+       responsePayload.warning = "El evento fue agendado. Nuestro modelo de IA desplazó automáticamente otro(s) evento(s) de menor prioridad a otras sedes disponibles.";
+    }
+
+    return res.status(201).json(responsePayload);
   } catch (error: any) {
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors[0].message });
@@ -686,6 +711,27 @@ app.put('/api/eventos/:id', authenticate, requireAdmin, async (req: AuthRequest,
     if (data.id_edificio) updateData.id_edificio = data.id_edificio;
     if (data.publico !== undefined) updateData.publico = data.publico;
     if (data.activo !== undefined) updateData.activo = data.activo;
+
+    const creadorId = Number(req.user!.userId);
+    const usuarioCreador = await prisma.usuario.findUnique({
+      where: { id_usuario: creadorId }
+    });
+    
+    let prioridadVal = usuarioCreador?.prioridad || 3;
+    if (usuarioCreador?.rol === 'rector') prioridadVal = 4;
+    else if (usuarioCreador?.rol === 'profesor') prioridadVal = 3;
+
+    if (data.fecha_inicio || data.fecha_fin || data.id_edificio) {
+       const dummyEvento = {
+         ...existingEvento,
+         ...updateData,
+         prioridad: prioridadVal
+       };
+       const evaluacion = await evaluarEvento(dummyEvento);
+       if (!evaluacion.permitir) {
+          return res.status(409).json({ error: evaluacion.mensaje });
+       }
+    }
 
     const evento = await prisma.evento.update({
       where: { id_evento: Number(id) },

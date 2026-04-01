@@ -2,8 +2,20 @@ import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth.js';
 import { createEventoSchema, updateEventoSchema } from '../validators/evento.validator.js';
+import { evaluarEvento, entrenarNeurona } from '../lib/eventoNeurona.js';
 
 const router = Router();
+
+// Entrenar Neurona
+router.post('/entrenar-neurona', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const history = await entrenarNeurona();
+    return res.json({ success: true, history });
+  } catch (error) {
+    console.error('Error entrenando neurona:', error);
+    return res.status(500).json({ error: 'Error interno al entrenar la red neuronal' });
+  }
+});
 
 // Get eventos mapa visitantes
 router.get('/', async (req: AuthRequest, res: Response) => {
@@ -74,6 +86,28 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Respo
       return res.status(404).json({ error: 'Edificio no encontrado' });
     }
 
+    const creadorId = data.id_creador ? data.id_creador : Number(req.user!.userId);
+    const usuarioCreador = await prisma.usuario.findUnique({
+      where: { id_usuario: creadorId }
+    });
+    
+    // Obtener prioridad
+    let prioridadVal = data.prioridad_evento || usuarioCreador?.prioridad || 3;
+    if (!data.prioridad_evento) {
+      if (usuarioCreador?.rol === 'rector') prioridadVal = 4;
+      else if (usuarioCreador?.rol === 'profesor') prioridadVal = 3;
+    }
+
+    // Evaluacion de IA / Desplazamiento
+    const evaluacion = await evaluarEvento({
+      ...data,
+      prioridad: prioridadVal
+    });
+
+    if (!evaluacion.permitir) {
+      return res.status(409).json({ error: evaluacion.mensaje });
+    }
+
     const evento = await prisma.evento.create({
       data: {
         nombre: data.nombre,
@@ -83,12 +117,17 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Respo
         id_edificio: data.id_edificio,
         publico: data.publico ?? true,
         activo: data.activo ?? true,
-        id_creador: Number(req.user!.userId),
+        id_creador: creadorId,
+        prioridad_evento: prioridadVal,
       },
       include: {
         edificio: true,
       },
     });
+
+    if (evaluacion.tipo === "DESPLAZAMIENTO_REALIZADO") {
+       (evento as any).warning = "Evento creado exitosamente. Algunos eventos de menor prioridad en este recito fueron reubicados por nuestro modelo de IA y sus dueños han sido notificados.";
+    }
 
     return res.status(201).json(evento);
   } catch (error: any) {
@@ -133,6 +172,28 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Res
     if (data.id_edificio) updateData.id_edificio = data.id_edificio;
     if (data.publico !== undefined) updateData.publico = data.publico;
     if (data.activo !== undefined) updateData.activo = data.activo;
+    if (data.id_creador !== undefined) updateData.id_creador = data.id_creador;
+    if (data.prioridad_evento !== undefined) updateData.prioridad_evento = data.prioridad_evento;
+
+    // Obtener prioridad
+    const creadorId = data.id_creador !== undefined ? data.id_creador : existingEvento.id_creador;
+    const usuarioCreador = await prisma.usuario.findUnique({
+      where: { id_usuario: creadorId }
+    });
+    let prioridadVal = data.prioridad_evento !== undefined ? data.prioridad_evento : existingEvento.prioridad_evento;
+
+    // Evaluacion de IA / Desplazamiento si cambian horarios/lugar
+    if (data.fecha_inicio || data.fecha_fin || data.id_edificio) {
+       const dummyEvento = {
+         ...existingEvento,
+         ...updateData,
+         prioridad: prioridadVal
+       };
+       const evaluacion = await evaluarEvento(dummyEvento);
+       if (!evaluacion.permitir) {
+          return res.status(409).json({ error: evaluacion.mensaje });
+       }
+    }
 
     const evento = await prisma.evento.update({
       where: { id_evento: Number(id) },

@@ -86,7 +86,7 @@ router.post('/register', async (req, res) => {
                 correo,
                 password_hash: hashedPassword,
                 nombre,
-                matricula: matricula || null,
+                matricula: matricula ?? "",
                 rol: 'alumno',
                 estado: 'pendiente', // Requiere validación del admin
             },
@@ -150,7 +150,7 @@ router.put('/validate/:id', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Estado inválido' });
         }
         const usuario = await prisma.usuario.update({
-            where: { id_usuario: parseInt(id) },
+            where: { id_usuario: Number(id) },
             data: {
                 estado,
                 fecha_validacion: new Date(),
@@ -160,6 +160,30 @@ router.put('/validate/:id', authenticate, async (req, res) => {
     }
     catch (error) {
         console.error('Validate user error:', error);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+// Admin/Rector: Listar todos los usuarios
+router.get('/all', authenticate, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin' && req.user.role !== 'rector') {
+            return res.status(403).json({ error: 'Acceso denegado' });
+        }
+        const usuarios = await prisma.usuario.findMany({
+            select: {
+                id_usuario: true,
+                correo: true,
+                nombre: true,
+                matricula: true,
+                rol: true,
+                estado: true,
+            },
+            orderBy: { nombre: 'asc' },
+        });
+        return res.json(usuarios);
+    }
+    catch (error) {
+        console.error('Get all users error:', error);
         return res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
