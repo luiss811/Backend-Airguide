@@ -4,7 +4,7 @@ import { enviarNotificacionDesplazamiento } from './mailer.js';
 const prisma = new PrismaClient();
 // Modelo global de TensorFlow
 let modelo = null;
-let maxEdificioId = 10; // Valor por defecto
+let maxEdificioId = 21; // Valor por defecto
 /**
  * Inicializa y entrena la red neuronal predictiva de recintos.
  * Simula el aprendizaje basado en hora -> edificio ideal.
@@ -104,7 +104,8 @@ export async function evaluarEvento(nuevoEvento) {
             AND: [
                 { fecha_inicio: { lt: new Date(nuevoEvento.fecha_fin) } },
                 { fecha_fin: { gt: new Date(nuevoEvento.fecha_inicio) } }
-            ]
+            ],
+            prioridad_evento: nuevoEvento.prioridad_evento
         },
         include: {
             creador: true,
@@ -112,10 +113,10 @@ export async function evaluarEvento(nuevoEvento) {
         }
     });
     // Si no es un bloque masivo, iteramos. (nuevoEvento.prioridad será definida como req.user default 4 para admin/rector)
-    const prioridadNuevo = nuevoEvento.prioridad || 4;
+    const prioridadNuevo = nuevoEvento.prioridad_evento;
     for (const eventoAfectado of eventosConflicto) {
         const prioridadAfectado = eventoAfectado.prioridad_evento;
-        if (prioridadNuevo > prioridadAfectado) {
+        if (prioridadNuevo < prioridadAfectado) {
             // Ejecutar desplazamiento con AI
             const nuevoIdEdificio = await predecirMejorEdificio(eventoAfectado.fecha_inicio, eventoAfectado.fecha_fin, eventoAfectado.id_edificio);
             if (!nuevoIdEdificio) {
