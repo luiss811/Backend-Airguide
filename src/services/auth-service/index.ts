@@ -340,6 +340,4 @@ app.get('/users', authenticate, requireAdmin, async (req: AuthRequest, res: Resp
 });
 
 const PORT = process.env.PORT_AUTH || 3011;
-app.listen(PORT, () => {
-  console.log(`Auth Service listening on port ${PORT}`);
-});
+app.listen(PORT, () => {  console.log('Servicio de Autenticación corriendo');});

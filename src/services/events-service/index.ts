@@ -105,4 +105,4 @@ app.delete('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, re
 });
 
 const PORT = process.env.PORT_EVENTS || 3013;
-app.listen(PORT, () => console.log(`Events Service running on port ${PORT}`));
+app.listen(PORT, () => console.log('Servicio de Eventos corriendo'));

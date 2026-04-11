@@ -62,7 +62,7 @@ app.listen(PORT, () => {
   console.log(`
     |----------------------------------------------------------------|
     |                                                                |
-    |    AirGuide API Gateway (Microservices)                        |
+    |    AirGuide API Gateway                                        |
     |                                                                |
     |     Listening on PORT: ${PORT}                                    |
     |----------------------------------------------------------------|

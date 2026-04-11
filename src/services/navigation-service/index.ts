@@ -35,7 +35,7 @@ app.get('/:id(\\d+)', async (req: AuthRequest, res: Response) => {
   }
 });
 
-app.post('/find', authenticate, async (req: AuthRequest, res: Response) => {
+app.post('/find', async (req: Request, res: Response) => {
   try {
     const { origen_tipo, origen_id, destino_tipo, destino_id } = req.body;
     if (!origen_tipo || !origen_id || !destino_tipo || !destino_id) return res.status(400).json({ error: 'Se requieren origen y destino' });
@@ -161,4 +161,4 @@ app.post('/google/compute-route', authenticate, async (req: Request, res: Respon
 });
 
 const PORT = process.env.PORT_NAVIGATION || 3014;
-app.listen(PORT, () => console.log(`Navigation Service running on port ${PORT}`));
+app.listen(PORT, () => console.log('Servicio de Navegación corriendo'));

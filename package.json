@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:push": "prisma db push",
-    "prisma:seed": "tsx src/prisma/seed.ts"
+    "prisma:seed": "tsx src/prisma/seed.ts",
+    "prisma:seed-pidet": "tsx scripts/seedPidetRoutes.ts"
   },
   "author": "Vexcel",
   "license": "MIT",

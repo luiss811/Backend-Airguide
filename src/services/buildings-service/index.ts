@@ -265,4 +265,4 @@ app.delete('/profesores/:id(\\d+)', authenticate, requireAdmin, async (req: Auth
 });
 
 const PORT = process.env.PORT_BUILDINGS || 3012;
-app.listen(PORT, () => console.log(`Buildings Service running on port ${PORT}`));
+app.listen(PORT, () => console.log('Servicio de Edificios corriendo'));

@@ -101,4 +101,4 @@ app.get('/rutas-populares', authenticate, requireAdmin, async (req: AuthRequest,
 });
 
 const PORT = process.env.PORT_ANALYTICS || 3015;
-app.listen(PORT, () => console.log(`Analytics Service running on port ${PORT}`));
+app.listen(PORT, () => console.log('Servicio de Analytics corriendo'));
