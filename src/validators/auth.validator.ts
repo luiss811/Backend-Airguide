@@ -14,3 +14,13 @@ export const registerSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const forgotPasswordSchema = z.object({
+  correo: z.string().email('Correo inválido'),
+});
+
+export const resetPasswordSchema = z.object({
+  correo: z.string().email('Correo inválido'),
+  codigo: z.string().min(6, 'Código inválido'),
+  newPassword: z.string().min(8, 'La nueva contraseña debe tener al menos 8 caracteres'),
+});

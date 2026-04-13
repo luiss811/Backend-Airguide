@@ -85,6 +85,9 @@ app.put('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: 
        if (!evaluacion.permitir) return res.status(409).json({ error: evaluacion.mensaje });
     }
 
+    if (data.fecha_inicio) data.fecha_inicio = new Date(data.fecha_inicio) as any;
+    if (data.fecha_fin) data.fecha_fin = new Date(data.fecha_fin) as any;
+
     const evento = await prisma.evento.update({
       where: { id_evento: Number(id) }, data: data as any, include: { edificio: true },
     });

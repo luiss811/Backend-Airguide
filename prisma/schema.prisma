@@ -163,6 +163,7 @@ model Ruta {
   destino_tipo       TipoDestino
   destino_id         Int
   tiempo_estimado    Int?            // en minutos
+  contador_usos      Int             @default(0)
   activo             Boolean         @default(true)
 
   detalles           RutaDetalle[]

@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { prisma } from '../../lib/prisma.js';
 import { authenticate, requireAdmin, AuthRequest } from '../../middleware/auth.middleware.js';
+import { entrenarCongestion } from '../../lib/congestionNeurona.js';
 
 const app = express();
 app.use(express.json());
@@ -90,13 +91,37 @@ app.get('/usuarios-rol', authenticate, requireAdmin, async (req: AuthRequest, re
 app.get('/rutas-populares', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const rutas = await prisma.ruta.findMany({
-      where: { activo: true },
-      select: { id_ruta: true, tipo: true, origen_tipo: true, origen_id: true, destino_tipo: true, destino_id: true, tiempo_estimado: true },
+      where: { activo: true, contador_usos: { gt: 0 } },
+      orderBy: { contador_usos: 'desc' },
       take: 10,
     });
-    return res.json(rutas);
+    
+    // Mappear IDs a Nombres
+    const edificiosIds = Array.from(new Set(rutas.flatMap(r => [r.origen_id, r.destino_id])));
+    const edificios = await prisma.edificio.findMany({
+      where: { id_edificio: { in: edificiosIds } }
+    });
+    const mapEdificios = Object.fromEntries(edificios.map(e => [e.id_edificio, e.nombre]));
+
+    const response = rutas.map(r => ({
+      id: r.id_ruta,
+      origen: mapEdificios[r.origen_id] || `${r.origen_tipo} ${r.origen_id}`,
+      destino: mapEdificios[r.destino_id] || `${r.destino_tipo} ${r.destino_id}`,
+      usos: r.contador_usos
+    }));
+
+    return res.json(response);
   } catch (error) {
     return res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+app.post('/train-congestion', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const loss = await entrenarCongestion();
+    return res.json({ message: 'Modelo de congestión entrenado con éxito', loss });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Error al entrenar congestión' });
   }
 });
 

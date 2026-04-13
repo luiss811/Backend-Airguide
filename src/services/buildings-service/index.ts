@@ -264,5 +264,85 @@ app.delete('/profesores/:id(\\d+)', authenticate, requireAdmin, async (req: Auth
   }
 });
 
+// --- CUBICULOS --- //
+// Get all cubiculos
+app.get('/cubiculos', async (req: AuthRequest, res: Response) => {
+  try {
+    const cubiculos = await prisma.cubiculo.findMany({
+      include: {
+        edificio: { select: { id_edificio: true, nombre: true } },
+        profesor: {
+          include: { usuario: { select: { nombre: true, correo: true } } }
+        }
+      },
+      orderBy: { id_edificio: 'asc' }
+    });
+    return res.json(cubiculos);
+  } catch (error) {
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Create cubiculo
+app.post('/cubiculos', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id_profesor, id_edificio, numero, piso, referencia, activo } = req.body;
+    const cubiculo = await prisma.cubiculo.create({
+      data: {
+        id_profesor: parseInt(id_profesor),
+        id_edificio: parseInt(id_edificio),
+        numero,
+        piso: parseInt(piso),
+        referencia,
+        activo: activo ?? true
+      },
+      include: {
+        edificio: { select: { id_edificio: true, nombre: true } },
+        profesor: { include: { usuario: { select: { nombre: true, correo: true } } } }
+      }
+    });
+    return res.status(201).json(cubiculo);
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al crear cubículo' });
+  }
+});
+
+// Update cubiculo
+app.put('/cubiculos/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { id_profesor, id_edificio, numero, piso, referencia, activo } = req.body;
+    const cubiculo = await prisma.cubiculo.update({
+      where: { id_cubiculo: parseInt(id) },
+      data: {
+        id_profesor: parseInt(id_profesor),
+        id_edificio: parseInt(id_edificio),
+        numero,
+        piso: parseInt(piso),
+        referencia,
+        activo
+      },
+      include: {
+        edificio: { select: { id_edificio: true, nombre: true } },
+        profesor: { include: { usuario: { select: { nombre: true, correo: true } } } }
+      }
+    });
+    return res.json(cubiculo);
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al actualizar cubículo' });
+  }
+});
+
+// Delete cubiculo
+app.delete('/cubiculos/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    await prisma.cubiculo.delete({ where: { id_cubiculo: parseInt(id) } });
+    return res.json({ message: 'Cubículo eliminado exitosamente' });
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al eliminar cubículo' });
+  }
+});
+
 const PORT = process.env.PORT_BUILDINGS || 3012;
 app.listen(PORT, () => console.log('Servicio de Edificios corriendo'));
