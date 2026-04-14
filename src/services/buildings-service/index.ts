@@ -313,7 +313,7 @@ app.put('/cubiculos/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequ
     const { id } = req.params;
     const { id_profesor, id_edificio, numero, piso, referencia, activo } = req.body;
     const cubiculo = await prisma.cubiculo.update({
-      where: { id_cubiculo: parseInt(id) },
+      where: { id_cubiculo: parseInt(id as string) },
       data: {
         id_profesor: parseInt(id_profesor),
         id_edificio: parseInt(id_edificio),
@@ -337,7 +337,7 @@ app.put('/cubiculos/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequ
 app.delete('/cubiculos/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.cubiculo.delete({ where: { id_cubiculo: parseInt(id) } });
+    await prisma.cubiculo.delete({ where: { id_cubiculo: parseInt(id as string) } });
     return res.json({ message: 'Cubículo eliminado exitosamente' });
   } catch (error) {
     return res.status(500).json({ error: 'Error al eliminar cubículo' });
