@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { prisma } from '../../lib/prisma.js';
 import { authenticate, requireAdmin, AuthRequest } from '../../middleware/auth.middleware.js';
 import { createEventoSchema, updateEventoSchema } from '../../validators/evento.validator.js';
-import { evaluarEvento } from '../../lib/eventoNeurona.js';
+import { evaluarEvento, entrenarNeurona } from '../../lib/eventoNeurona.js';
 
 const app = express();
 app.use(express.json());
@@ -41,11 +41,14 @@ app.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Response
     const data = createEventoSchema.parse(req.body);
     const creadorId = parseInt(req.user!.userId);
     const usuarioCreador = await prisma.usuario.findUnique({ where: { id_usuario: creadorId } });
-    let prioridadVal = usuarioCreador?.prioridad || 3;
-    if (usuarioCreador?.rol === 'rector') prioridadVal = 4;
-    else if (usuarioCreador?.rol === 'profesor') prioridadVal = 3;
+    let prioridadVal = data.prioridad_evento;
+    if (prioridadVal === undefined) {
+      prioridadVal = usuarioCreador?.prioridad || 3;
+      if (usuarioCreador?.rol === 'rector') prioridadVal = 4;
+      else if (usuarioCreador?.rol === 'profesor') prioridadVal = 3;
+    }
 
-    const evaluacion = await evaluarEvento({ ...data, prioridad: prioridadVal });
+    const evaluacion = await evaluarEvento({ ...data, prioridad_evento: prioridadVal });
     if (!evaluacion.permitir) return res.status(409).json({ error: evaluacion.mensaje });
 
     const evento = await prisma.evento.create({
@@ -54,7 +57,8 @@ app.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Response
         fecha_inicio: data.fecha_inicio ? new Date(data.fecha_inicio) : new Date(),
         fecha_fin: data.fecha_fin ? new Date(data.fecha_fin) : new Date(),
         id_edificio: data.id_edificio, publico: data.publico ?? true, activo: data.activo ?? true,
-        id_creador: creadorId, prioridad_evento: prioridadVal
+        id_creador: creadorId, prioridad_evento: prioridadVal,
+        total_invitados: data.total_invitados ?? 0
       },
       include: { edificio: true },
     });
@@ -77,10 +81,13 @@ app.put('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: 
 
     const creadorId = Number(req.user!.userId);
     const usuarioCreador = await prisma.usuario.findUnique({ where: { id_usuario: creadorId } });
-    let prioridadVal = usuarioCreador?.prioridad || 3;
+    let prioridadVal = data.prioridad_evento;
+    if (prioridadVal === undefined) {
+      prioridadVal = usuarioCreador?.prioridad || 3;
+    }
 
     if (data.fecha_inicio || data.fecha_fin || data.id_edificio) {
-       const dummyEvento = { ...existingEvento, ...data, prioridad: prioridadVal };
+       const dummyEvento = { ...existingEvento, ...data, prioridad_evento: prioridadVal };
        const evaluacion = await evaluarEvento(dummyEvento as any);
        if (!evaluacion.permitir) return res.status(409).json({ error: evaluacion.mensaje });
     }
@@ -104,6 +111,38 @@ app.delete('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, re
     return res.json({ message: 'Evento eliminado' });
   } catch (error) {
     return res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+app.post('/entrenar-neurona', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await entrenarNeurona();
+    return res.json({ success: true, history: result });
+  } catch (error: any) {
+    console.error("Error entrenando neurona:", error);
+    return res.status(500).json({ error: 'Error interno al entrenar neurona' });
+  }
+});
+
+// Endpoint público para confirmar asistencia mediante código QR
+app.post('/:id(\\d+)/confirmar-asistencia', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const evento = await prisma.evento.findUnique({ where: { id_evento: Number(id) } });
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    const actualizado = await prisma.evento.update({
+      where: { id_evento: Number(id) },
+      data: {
+        asistentes_confirmados: {
+          increment: 1
+        }
+      }
+    });
+
+    return res.json({ message: 'Asistencia confirmada', asistentes_confirmados: actualizado.asistentes_confirmados });
+  } catch (error) {
+    return res.status(500).json({ error: 'Error interno al confirmar asistencia' });
   }
 });
 

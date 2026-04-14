@@ -146,6 +146,8 @@ model Evento {
 
   id_creador         Int
   prioridad_evento   Int             @default(4)
+  total_invitados    Int             @default(0)
+  asistentes_confirmados Int         @default(0)
   
   edificio           Edificio        @relation(fields: [id_edificio], references: [id_edificio], onDelete: Cascade)
   creador            Usuario         @relation(fields: [id_creador], references: [id_usuario])
