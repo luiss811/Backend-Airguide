@@ -13,16 +13,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({
+const corsOptions = {
   origin: [
     'http://localhost:5173',
     'https://airguide-lac.vercel.app',
     'https://*.vercel.app'
   ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
+
+app.use(cors(corsOptions));
+
+// Handle OPTIONS preflight for all routes BEFORE proxies
+app.options('*', cors(corsOptions));
 
 // Servir frontend static si estamos en producción
 const frontendPath = path.join(__dirname, '../../../dist');
