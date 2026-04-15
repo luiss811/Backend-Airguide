@@ -2,9 +2,9 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../lib/prisma.js';
 import { generateToken } from '../../lib/jwt.js';
-import { sendOtpEmail } from '../../lib/email.js';
+import { sendOtpEmail, sendPasswordResetEmail } from '../../lib/email.js';
 import { generateOtp, getOtpExpiry } from '../../lib/otp.js';
-import { loginSchema, registerSchema } from '../../validators/auth.validator.js';
+import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '../../validators/auth.validator.js';
 import { authenticate, requireAdmin } from '../../middleware/auth.middleware.js';
 const app = express();
 app.use(express.json());
@@ -199,6 +199,85 @@ app.post('/register', async (req, res) => {
         return res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+// Forgot Password
+app.post('/forgot-password', async (req, res) => {
+    try {
+        const { correo } = forgotPasswordSchema.parse(req.body);
+        const usuario = await prisma.usuario.findUnique({
+            where: { correo },
+        });
+        if (!usuario) {
+            // Return success to avoid email enumeration
+            return res.json({ message: 'Si el correo existe, recibirás un código de recuperación.' });
+        }
+        if (usuario.estado !== 'activo') {
+            return res.json({ message: 'Si el correo existe, recibirás un código de recuperación.' });
+        }
+        // Invalidate previous OTPs
+        await prisma.codigoOtp.updateMany({
+            where: { id_usuario: usuario.id_usuario, usado: false },
+            data: { usado: true },
+        });
+        const codigo = generateOtp();
+        const expira_en = getOtpExpiry();
+        await prisma.codigoOtp.create({
+            data: { id_usuario: usuario.id_usuario, codigo, expira_en },
+        });
+        await sendPasswordResetEmail(usuario.correo, usuario.nombre, codigo);
+        return res.json({ message: 'Si el correo existe, recibirás un código de recuperación.' });
+    }
+    catch (error) {
+        if (error.name === 'ZodError') {
+            return res.status(400).json({ error: error.errors[0].message });
+        }
+        console.error('Forgot password error:', error);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+// Reset Password
+app.post('/reset-password', async (req, res) => {
+    try {
+        const { correo, codigo, newPassword } = resetPasswordSchema.parse(req.body);
+        const usuario = await prisma.usuario.findUnique({ where: { correo } });
+        if (!usuario) {
+            return res.status(401).json({ error: 'Código incorrecto o expirado.' });
+        }
+        const ahora = new Date();
+        const otpRecord = await prisma.codigoOtp.findFirst({
+            where: {
+                id_usuario: usuario.id_usuario,
+                codigo,
+                usado: false,
+                expira_en: { gt: ahora },
+            },
+            orderBy: { creado_en: 'desc' },
+        });
+        if (!otpRecord) {
+            return res.status(401).json({ error: 'Código incorrecto o expirado. Solicita uno nuevo.' });
+        }
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        // Update password and mark OTP as used
+        await prisma.$transaction([
+            prisma.usuario.update({
+                where: { id_usuario: usuario.id_usuario },
+                data: { password_hash: hashedPassword },
+            }),
+            prisma.codigoOtp.update({
+                where: { id: otpRecord.id },
+                data: { usado: true },
+            })
+        ]);
+        return res.json({ message: 'Contraseña actualizada correctamente. Ya puedes iniciar sesión.' });
+    }
+    catch (error) {
+        if (error.name === 'ZodError') {
+            return res.status(400).json({ error: error.errors[0].message });
+        }
+        console.error('Reset password error:', error);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 // Get usuario
 app.get('/me', authenticate, async (req, res) => {
     try {
@@ -294,7 +373,5 @@ app.get('/users', authenticate, requireAdmin, async (req, res) => {
     }
 });
 const PORT = process.env.PORT_AUTH || 3011;
-app.listen(PORT, () => {
-    console.log(`Auth Service listening on port ${PORT}`);
-});
+app.listen(PORT, () => { console.log('Servicio de Autenticación corriendo'); });
 //# sourceMappingURL=index.js.map

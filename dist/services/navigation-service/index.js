@@ -2,6 +2,7 @@ import express from 'express';
 import { prisma } from '../../lib/prisma.js';
 import { authenticate, requireAdmin } from '../../middleware/auth.middleware.js';
 import { createRutaSchema, updateRutaSchema, createRutaDetalleSchema } from '../../validators/ruta.validator.js';
+import { predecirCongestionRuta } from '../../lib/congestionNeurona.js';
 const app = express();
 app.use(express.json());
 app.get('/', async (req, res) => {
@@ -37,7 +38,7 @@ app.get('/:id(\\d+)', async (req, res) => {
         return res.status(500).json({ error: 'Error interno' });
     }
 });
-app.post('/find', authenticate, async (req, res) => {
+app.post('/find', async (req, res) => {
     try {
         const { origen_tipo, origen_id, destino_tipo, destino_id } = req.body;
         if (!origen_tipo || !origen_id || !destino_tipo || !destino_id)
@@ -48,6 +49,10 @@ app.post('/find', authenticate, async (req, res) => {
         });
         if (!ruta)
             return res.status(404).json({ error: 'No se encontró una ruta' });
+        await prisma.ruta.update({
+            where: { id_ruta: ruta.id_ruta },
+            data: { contador_usos: { increment: 1 } }
+        });
         return res.json(ruta);
     }
     catch (error) {
@@ -162,6 +167,42 @@ app.post('/google/compute-route', authenticate, async (req, res) => {
         return res.status(500).json({ error: 'No se pudo calcular la ruta' });
     }
 });
+app.post('/check-congestion', async (req, res) => {
+    try {
+        const { id_ruta } = req.body;
+        if (!id_ruta)
+            return res.status(400).json({ error: 'Falta id_ruta' });
+        // Obtener la hora del sistema en CDMX (o del server)
+        const currentHour = new Date().getHours();
+        const score = await predecirCongestionRuta(Number(id_ruta), currentHour);
+        return res.json({ congested: score > 0.7, score, hour: currentHour });
+    }
+    catch (error) {
+        return res.status(500).json({ error: 'Error analizando congestión' });
+    }
+});
+app.get('/heatmap', async (req, res) => {
+    try {
+        const rutas = await prisma.ruta.findMany({
+            where: { tipo: 'interna', activo: true },
+            include: { detalles: { orderBy: { orden: 'asc' } } }
+        });
+        const currentHour = new Date().getHours();
+        // Evaluate AI for all routes concurrently
+        const heatmapData = await Promise.all(rutas.map(async (ruta) => {
+            const score = await predecirCongestionRuta(ruta.id_ruta, currentHour);
+            return {
+                id_ruta: ruta.id_ruta,
+                score,
+                path: ruta.detalles.map(d => ({ lat: Number(d.latitud), lng: Number(d.longitud) }))
+            };
+        }));
+        return res.json(heatmapData);
+    }
+    catch (error) {
+        return res.status(500).json({ error: 'Error generando heatmap global' });
+    }
+});
 const PORT = process.env.PORT_NAVIGATION || 3014;
-app.listen(PORT, () => console.log(`Navigation Service running on port ${PORT}`));
+app.listen(PORT, () => console.log('Servicio de Navegación corriendo'));
 //# sourceMappingURL=index.js.map

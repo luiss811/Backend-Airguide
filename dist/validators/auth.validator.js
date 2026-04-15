@@ -9,4 +9,12 @@ export const registerSchema = z.object({
     nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
     matricula: z.string().optional(),
 });
+export const forgotPasswordSchema = z.object({
+    correo: z.string().email('Correo inválido'),
+});
+export const resetPasswordSchema = z.object({
+    correo: z.string().email('Correo inválido'),
+    codigo: z.string().min(6, 'Código inválido'),
+    newPassword: z.string().min(8, 'La nueva contraseña debe tener al menos 8 caracteres'),
+});
 //# sourceMappingURL=auth.validator.js.map

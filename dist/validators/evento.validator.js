@@ -9,6 +9,7 @@ export const createEventoSchema = z.object({
     activo: z.boolean().optional(),
     id_creador: z.number().int().positive('ID de creador inválido').optional(),
     prioridad_evento: z.number().int().min(1).max(5).optional(),
+    total_invitados: z.number().int().min(0).optional(),
 });
 export const updateEventoSchema = z.object({
     nombre: z.string().min(1, 'El nombre debe tener al menos 1 caracteres').optional(),
@@ -20,5 +21,6 @@ export const updateEventoSchema = z.object({
     activo: z.boolean().optional(),
     id_creador: z.number().int().positive('ID de creador inválido').optional(),
     prioridad_evento: z.number().int().min(1).max(5).optional(),
+    total_invitados: z.number().int().min(0).optional(),
 });
 //# sourceMappingURL=evento.validator.js.map

@@ -98,15 +98,18 @@ async function predecirMejorEdificio(fechaInicio, fechaFin, edificioEvitadoId) {
  * Función principal para evaluar y desplazar eventos
  */
 export async function evaluarEvento(nuevoEvento) {
+    const whereClause = {
+        id_edificio: nuevoEvento.id_edificio,
+        AND: [
+            { fecha_inicio: { lt: new Date(nuevoEvento.fecha_fin) } },
+            { fecha_fin: { gt: new Date(nuevoEvento.fecha_inicio) } }
+        ]
+    };
+    if (nuevoEvento.id_evento) {
+        whereClause.id_evento = { not: nuevoEvento.id_evento };
+    }
     const eventosConflicto = await prisma.evento.findMany({
-        where: {
-            id_edificio: nuevoEvento.id_edificio,
-            AND: [
-                { fecha_inicio: { lt: new Date(nuevoEvento.fecha_fin) } },
-                { fecha_fin: { gt: new Date(nuevoEvento.fecha_inicio) } }
-            ],
-            prioridad_evento: nuevoEvento.prioridad_evento
-        },
+        where: whereClause,
         include: {
             creador: true,
             edificio: true
@@ -116,7 +119,7 @@ export async function evaluarEvento(nuevoEvento) {
     const prioridadNuevo = nuevoEvento.prioridad_evento;
     for (const eventoAfectado of eventosConflicto) {
         const prioridadAfectado = eventoAfectado.prioridad_evento;
-        if (prioridadNuevo < prioridadAfectado) {
+        if (prioridadNuevo > prioridadAfectado) {
             // Ejecutar desplazamiento con AI
             const nuevoIdEdificio = await predecirMejorEdificio(eventoAfectado.fecha_inicio, eventoAfectado.fecha_fin, eventoAfectado.id_edificio);
             if (!nuevoIdEdificio) {

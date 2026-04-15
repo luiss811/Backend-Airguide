@@ -15,6 +15,7 @@ const PORT = process.env.PORT || 3001;
 
 const corsOptions = {
   origin: [
+    'https://*',
     'http://localhost:5173',
     'https://airguide-lac.vercel.app',
     'https://*.vercel.app'
