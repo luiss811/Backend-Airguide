@@ -1,19 +1,23 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-// El dominio "from" debe ser un dominio verificado en Resend.
-// Para pruebas puedes usar el dominio sandbox: onboarding@resend.dev
-// Para producción configura tu dominio en resend.com/domains
-const FROM_EMAIL = process.env.SMTP_FROM || process.env.SMTP_USER || 'onboarding@resend.dev';
-const FROM_NAME = 'AirGuide';
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 export async function sendOtpEmail(correo: string, nombre: string, codigo: string): Promise<void> {
-  const { error } = await resend.emails.send({
-    from: `${FROM_NAME} <${FROM_EMAIL}>`,
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+  await transporter.sendMail({
+    from: `"AirGuide" <${from}>`,
     to: correo,
     subject: 'Tu código de verificación - AirGuide',
     html: `
@@ -70,15 +74,13 @@ export async function sendOtpEmail(correo: string, nombre: string, codigo: strin
       </html>
     `,
   });
-
-  if (error) {
-    throw new Error(`Error enviando OTP email: ${error.message}`);
-  }
 }
 
 export async function sendPasswordResetEmail(correo: string, nombre: string, codigo: string): Promise<void> {
-  const { error } = await resend.emails.send({
-    from: `${FROM_NAME} Soporte <${FROM_EMAIL}>`,
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+  await transporter.sendMail({
+    from: `"AirGuide Soporte" <${from}>`,
     to: correo,
     subject: 'Recuperación de contraseña - AirGuide',
     html: `
@@ -135,8 +137,4 @@ export async function sendPasswordResetEmail(correo: string, nombre: string, cod
       </html>
     `,
   });
-
-  if (error) {
-    throw new Error(`Error enviando email de recuperación: ${error.message}`);
-  }
 }
