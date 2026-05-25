@@ -5,9 +5,9 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"tsx watch src/gateway/index.ts\" \"tsx watch src/services/auth-service/index.ts\" \"tsx watch src/services/buildings-service/index.ts\" \"tsx watch src/services/events-service/index.ts\" \"tsx watch src/services/navigation-service/index.ts\" \"tsx watch src/services/analytics-service/index.ts\"",
+    "dev": "concurrently \"tsx watch src/gateway/index.ts\" \"tsx watch src/services/auth-service/index.ts\" \"tsx watch src/services/buildings-service/index.ts\" \"tsx watch src/services/events-service/index.ts\" \"tsx watch src/services/navigation-service/index.ts\" \"tsx watch src/services/analytics-service/index.ts\" \"tsx watch src/services/profesores-service/index.ts\"",
     "build": "tsc",
-    "start": "concurrently \"node dist/gateway/index.js\" \"node dist/services/auth-service/index.js\" \"node dist/services/buildings-service/index.js\" \"node dist/services/events-service/index.js\" \"node dist/services/navigation-service/index.js\" \"node dist/services/analytics-service/index.js\"",
+    "start": "concurrently \"node dist/gateway/index.js\" \"node dist/services/auth-service/index.js\" \"node dist/services/buildings-service/index.js\" \"node dist/services/events-service/index.js\" \"node dist/services/navigation-service/index.js\" \"node dist/services/analytics-service/index.js\" \"node dist/services/profesores-service/index.js\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",

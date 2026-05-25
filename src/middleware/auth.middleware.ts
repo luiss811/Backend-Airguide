@@ -36,3 +36,10 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
   }
   next();
 };
+
+export const requireProfesor = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (req.user?.role !== 'profesor') {
+    return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de profesor' });
+  }
+  next();
+};

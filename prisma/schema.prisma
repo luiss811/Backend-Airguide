@@ -109,6 +109,7 @@ model Profesor {
   id_usuario         Int             @unique
   departamento       String
   activo             Boolean         @default(true)
+  horario_pdf        String?
 
   usuario            Usuario         @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
   cubiculos          Cubiculo[]

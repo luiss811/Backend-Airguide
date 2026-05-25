@@ -16,83 +16,58 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash('password123', 10);
 
-  const admin = await prisma.usuario.create({
-    data: {
-      matricula: '1',
-      correo: 'admin@uteq.edu.mx',
-      password_hash: hashedPassword,
-      nombre: 'Administrador del Sistema',
-      rol: 'admin',
-      prioridad: 2,
-      estado: 'activo',
-      fecha_validacion: new Date(),
-    },
+  await prisma.usuario.createMany({
+    data: [
+      { id_usuario: 1, correo: 'admin@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-11T01:24:37.808Z'), fecha_validacion: new Date('2026-04-13T04:18:09.150Z'), matricula: '1', nombre: 'Administrador del sistema', password_hash: '$2a$10$Ak3ImR4gvGN266XkmdHKiOttsdcLSC4H4tn0i1BhUuL2hYInpa7Ee', prioridad: 2, rol: 'admin' },
+      { id_usuario: 2, correo: '2023171011@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-11T01:24:37.962Z'), fecha_validacion: new Date('2026-04-15T20:19:14.959Z'), matricula: '2023171011', nombre: 'Juan Pérez García', password_hash: '$2a$10$Ak3ImR4gvGN266XkmdHKiOttsdcLSC4H4tn0i1BhUuL2hYInpa7Ee', prioridad: 4, rol: 'alumno' },
+      { id_usuario: 3, correo: '2019881719@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-11T01:24:38.037Z'), fecha_validacion: new Date('2026-04-15T20:34:20.091Z'), matricula: '2019881719', nombre: 'María López Hernández', password_hash: '$2a$10$Ak3ImR4gvGN266XkmdHKiOttsdcLSC4H4tn0i1BhUuL2hYInpa7Ee', prioridad: 4, rol: 'alumno' },
+      { id_usuario: 4, correo: 'admin2@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-11T01:24:38.190Z'), fecha_validacion: new Date('2026-04-11T01:24:38.188Z'), matricula: '3', nombre: 'Administrador 2', password_hash: '$2a$10$Ak3ImR4gvGN266XkmdHKiOttsdcLSC4H4tn0i1BhUuL2hYInpa7Ee', prioridad: 2, rol: 'admin' },
+      { id_usuario: 5, correo: 'profesorprueba@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-11T01:24:38.265Z'), fecha_validacion: new Date('2026-04-15T20:35:06.309Z'), matricula: '4', nombre: 'Profesor para desarrollo', password_hash: '$2a$10$Ak3ImR4gvGN266XkmdHKiOttsdcLSC4H4tn0i1BhUuL2hYInpa7Ee', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 6, correo: 'lalitorios81@gmail.com', estado: 'activo', fecha_registro: new Date('2026-04-11T23:31:34.513Z'), fecha_validacion: null, matricula: '202317', nombre: 'Luis Eduardo Rios Cervantes', password_hash: '$2a$10$NP8Tf5f.IC63g1IAr0.36.gOBXxeRzfUIgOdTSAhNO4WBqrrcJ0cC', prioridad: 2, rol: 'admin' },
+      { id_usuario: 7, correo: 'angelica.garduno@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-14T16:06:34.394Z'), fecha_validacion: new Date('2026-04-15T20:34:59.019Z'), matricula: '2336151', nombre: 'Angelica', password_hash: '$2a$10$DxaCKRarMNOzJp2/81jiIefLKlAHJ39yxKUUIv/WK.UIeTJMUy4jC', prioridad: 4, rol: 'alumno' },
+      { id_usuario: 8, correo: '20223371155@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-15T23:03:21.060Z'), fecha_validacion: new Date('2026-04-16T00:08:39.911Z'), matricula: '2023371155', nombre: 'Saul Perez', password_hash: '$2a$10$/Ej//ga9yFFNgnEpcDkHz.92/2rI3ta04DJQU0GAfyiR7PHso6t2e', prioridad: 4, rol: 'alumno' },
+      { id_usuario: 9, correo: 'jorge.garcia.saldana@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172101', nombre: 'Jorge García Saldaña', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 10, correo: 'rogelio.bautista.sanchez@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172102', nombre: 'Rogelio Bautista Sánchez', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 11, correo: 'raul.garcia.perez@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172103', nombre: 'Raúl García Pérez', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 12, correo: 'filiberto.ruiz.hernandez@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172104', nombre: 'Filiberto Ruiz Hernández', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 13, correo: 'jose.alberto.delgadillo.gutierrez@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172105', nombre: 'José Alberto Delgadillo Gutiérrez', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 14, correo: 'emmanuel.martinez.hernandez@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172106', nombre: 'Martinez Hernandez Emmanuel', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 15, correo: 'angelica.garduno.bustamante@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172107', nombre: 'Angelica Garduño Bustamante', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 16, correo: 'jesus.hernan.vazquez.perez@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172108', nombre: 'Jesus Hernan Vazquez Pérez', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 17, correo: 'maria.rodriguez.vazquez@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172109', nombre: 'María Rodriguez Vazquez', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 18, correo: 'andrea.hernandez.mendoza@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172100', nombre: 'Andrea Hernandez Mendoza', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 19, correo: 'ma.aurora.osornio@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172110', nombre: 'Ma. Aurora Osornio', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 20, correo: 'manuel.contreras.castillo@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172111', nombre: 'Manuel Contreras Castillo', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 21, correo: 'tito.villalobos.cruz@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172112', nombre: 'Tito Villalobos Cruz', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 22, correo: 'brandon.efren.venegas.olvera@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172113', nombre: 'Brandon Efren Venegas Olvera', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 23, correo: 'ernesto.chaavero.navarrete@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172114', nombre: 'Ernesto Chavero Navarrete', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' },
+      { id_usuario: 24, correo: 'gerardo.ramirez.villareal@uteq.edu.mx', estado: 'activo', fecha_registro: new Date('2026-04-16T00:05:54.236Z'), fecha_validacion: null, matricula: '2026172115', nombre: 'Gerardo Ramirez Villareal', password_hash: '$2b$10$R9h/lIPz0bouIz6IC9TbZ.0zQZkt7v5N.nSAnSZnSZnSZnSZnSZnS', prioridad: 3, rol: 'profesor' }
+    ],
   });
 
-  const alumno1 = await prisma.usuario.create({
-    data: {
-      matricula: '2023171011',
-      correo: '2023171011@uteq.edu.mx',
-      password_hash: hashedPassword,
-      nombre: 'Juan Pérez García',
-      rol: 'alumno',
-      prioridad: 4,
-      estado: 'activo',
-      fecha_validacion: new Date(),
-    },
+  await prisma.profesor.createMany({
+    data: [
+      { id_profesor: 1, activo: true, departamento: 'Matemáticas', id_usuario: 4 },
+      { id_profesor: 2, activo: true, departamento: 'Biblioteca', id_usuario: 5 },
+      { id_profesor: 3, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 9 },
+      { id_profesor: 4, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 10 },
+      { id_profesor: 5, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 11 },
+      { id_profesor: 6, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 12 },
+      { id_profesor: 7, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 13 },
+      { id_profesor: 8, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 14 },
+      { id_profesor: 9, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 15 },
+      { id_profesor: 10, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 16 },
+      { id_profesor: 11, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 17 },
+      { id_profesor: 12, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 18 },
+      { id_profesor: 13, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 19 },
+      { id_profesor: 14, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 20 },
+      { id_profesor: 15, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 21 },
+      { id_profesor: 16, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 22 },
+      { id_profesor: 17, activo: true, departamento: 'Tecnologías de la Información', id_usuario: 23 }
+    ],
   });
 
-  const alumno2 = await prisma.usuario.create({
-    data: {
-      matricula: '2019881719',
-      correo: '2019881719@uteq.edu.mx',
-      password_hash: hashedPassword,
-      nombre: 'María López Hernández',
-      rol: 'alumno',
-      prioridad: 4,
-      estado: 'activo',
-      fecha_validacion: new Date(),
-    },
-  });
 
-  const usuarioProf1 = await prisma.usuario.create({
-    data: {
-      matricula: '2',
-      correo: 'manuelcontreras@uteq.edu.mx',
-      password_hash: hashedPassword,
-      nombre: 'MANUEL CONTRERAS CASTILLO',
-      rol: 'profesor',
-      prioridad: 3,
-      estado: 'activo',
-      fecha_validacion: new Date(),
-    },
-  });
-
-  const usuarioProf2 = await prisma.usuario.create({
-    data: {
-      matricula: '3',
-      correo: 'titovilalobos@uteq.edu.mx',
-      password_hash: hashedPassword,
-      nombre: 'Mtro. Tito Vilalobos Cruz',
-      rol: 'profesor',
-      prioridad: 3,
-      estado: 'activo',
-      fecha_validacion: new Date(),
-    },
-  });
-
-  const usuarioProf3 = await prisma.usuario.create({
-    data: {
-      matricula: '4',
-      correo: 'ana.martinez@uteq.edu.mx',
-      password_hash: hashedPassword,
-      nombre: 'Mtra. Ana Martínez',
-      rol: 'profesor',
-      prioridad: 1,
-      estado: 'activo',
-      fecha_validacion: new Date(),
-    },
-  });
 
   const biblioteca = await prisma.edificio.create({
     data: {
@@ -202,57 +177,27 @@ async function main() {
     ],
   });
 
-  const prof1 = await prisma.profesor.create({
-    data: {
-      id_usuario: usuarioProf1.id_usuario,
-      departamento: 'Area de Desarrollo y Gestion de Software',
-      activo: true,
-    },
-  });
-
-  const prof2 = await prisma.profesor.create({
-    data: {
-      id_usuario: usuarioProf2.id_usuario,
-      departamento: 'Matemáticas',
-      activo: true,
-    },
-  });
-
-  const prof3 = await prisma.profesor.create({
-    data: {
-      id_usuario: usuarioProf3.id_usuario,
-      departamento: 'Biblioteca',
-      activo: true,
-    },
-  });
-
   await prisma.cubiculo.createMany({
     data: [
-      {
-        id_profesor: prof1.id_profesor,
-        id_edificio: edificiok.id_edificio,
-        numero: '301-A',
-        piso: 2,
-        referencia: 'Subiendo por las escaleras, a la derecha',
-        activo: true,
-      },
-      {
-        id_profesor: prof2.id_profesor,
-        id_edificio: edificiok.id_edificio,
-        numero: '302-B',
-        piso: 2,
-        referencia: 'Al final del pasillo, doblando a la derecha',
-        activo: true,
-      },
-      {
-        id_profesor: prof3.id_profesor,
-        id_edificio: biblioteca.id_edificio,
-        numero: '201',
-        piso: 1,
-        referencia: 'Junto a la sala de lectura',
-        activo: true,
-      },
+      { id_cubiculo: 1, activo: true, id_edificio: 24, id_profesor: 2, numero: '201', piso: 1, referencia: 'Junto a la sala de lectura' },
+      { id_cubiculo: 2, activo: true, id_edificio: 28, id_profesor: 1, numero: '5', piso: 2, referencia: 'Subiendo las escaleras, entras por las puestas de cristal y a mano derecha, es el quinto cubiculo' },
+      { id_cubiculo: 3, activo: true, id_edificio: 28, id_profesor: 3, numero: 'AULA 12', piso: 2, referencia: 'Planta Alta' },
+      { id_cubiculo: 4, activo: true, id_edificio: 28, id_profesor: 4, numero: 'CISCO A12', piso: 1, referencia: 'Edificio J' },
+      { id_cubiculo: 5, activo: true, id_edificio: 28, id_profesor: 5, numero: 'CISCO CIC', piso: 1, referencia: 'Centro de Cómputo' },
+      { id_cubiculo: 6, activo: true, id_edificio: 28, id_profesor: 6, numero: 'DATAREA 11', piso: 2, referencia: 'Área de Datos' },
+      { id_cubiculo: 7, activo: true, id_edificio: 28, id_profesor: 7, numero: 'AREA 12', piso: 2, referencia: 'Área de Desarrollo' },
+      { id_cubiculo: 8, activo: true, id_edificio: 28, id_profesor: 8, numero: 'AREA 11', piso: 2, referencia: 'Planta Alta' },
+      { id_cubiculo: 9, activo: true, id_edificio: 28, id_profesor: 9, numero: 'SUMPA', piso: 1, referencia: 'Planta Baja' },
+      { id_cubiculo: 10, activo: true, id_edificio: 28, id_profesor: 10, numero: 'AULA 11', piso: 2, referencia: 'Planta Alta' },
+      { id_cubiculo: 11, activo: true, id_edificio: 28, id_profesor: 11, numero: 'AULA 17', piso: 2, referencia: 'Planta Alta' },
+      { id_cubiculo: 12, activo: true, id_edificio: 28, id_profesor: 12, numero: 'AULA 13', piso: 2, referencia: 'Planta Alta' },
+      { id_cubiculo: 13, activo: true, id_edificio: 28, id_profesor: 13, numero: 'EDIFICIO H', piso: 1, referencia: 'Área de Comunicación' },
+      { id_cubiculo: 14, activo: true, id_edificio: 28, id_profesor: 14, numero: 'AREA 11-I', piso: 2, referencia: 'Edificio I' },
+      { id_cubiculo: 15, activo: true, id_edificio: 28, id_profesor: 15, numero: 'AULA 16', piso: 2, referencia: 'Planta Alta' },
+      { id_cubiculo: 16, activo: true, id_edificio: 28, id_profesor: 16, numero: 'LADI 2', piso: 1, referencia: 'Laboratorio LADI' },
+      { id_cubiculo: 17, activo: true, id_edificio: 28, id_profesor: 17, numero: 'AREA 8', piso: 1, referencia: 'Planta Baja' }
     ],
+    skipDuplicates: true,
   });
 
   await prisma.evento.createMany({
@@ -263,8 +208,8 @@ async function main() {
         fecha_inicio: new Date('2026-03-15T09:00:00'),
         fecha_fin: new Date('2026-03-15T18:00:00'),
         id_edificio: auditorio.id_edificio,
-        id_creador: admin.id_usuario,
-        prioridad_evento: admin.prioridad,
+        id_creador: 1,
+        prioridad_evento: 4,
         publico: true,
         activo: true,
       },
@@ -274,8 +219,8 @@ async function main() {
         fecha_inicio: new Date('2026-03-20T14:00:00'),
         fecha_fin: new Date('2026-03-20T16:00:00'),
         id_edificio: industrial.id_edificio,
-        id_creador: usuarioProf1.id_usuario,
-        prioridad_evento: usuarioProf1.prioridad,
+        id_creador: 11,
+        prioridad_evento: 3,
         publico: true,
         activo: true,
       },
@@ -285,8 +230,8 @@ async function main() {
         fecha_inicio: new Date('2026-03-25T08:00:00'),
         fecha_fin: new Date('2026-03-25T18:00:00'),
         id_edificio: industrial.id_edificio,
-        id_creador: alumno1.id_usuario,
-        prioridad_evento: alumno1.prioridad,
+        id_creador: 12,
+        prioridad_evento: 3,
         publico: true,
         activo: true,
       },
@@ -296,8 +241,8 @@ async function main() {
         fecha_inicio: new Date('2026-04-01T10:00:00'),
         fecha_fin: new Date('2026-04-05T20:00:00'),
         id_edificio: auditorio.id_edificio,
-        id_creador: admin.id_usuario,
-        prioridad_evento: admin.prioridad,
+        id_creador: 1,
+        prioridad_evento: 2,
         publico: true,
         activo: true,
       },
@@ -456,19 +401,19 @@ async function main() {
   await prisma.logAcceso.createMany({
     data: [
       {
-        id_usuario: admin.id_usuario,
+        id_usuario: 1,
         fecha: new Date('2026-03-01T08:30:00'),
         ip: '192.168.1.100',
         dispositivo: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
       },
       {
-        id_usuario: alumno1.id_usuario,
+        id_usuario: 2,
         fecha: new Date('2026-03-01T09:15:00'),
         ip: '192.168.1.101',
         dispositivo: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X)',
       },
       {
-        id_usuario: alumno2.id_usuario,
+        id_usuario: 3,
         fecha: new Date('2026-03-01T10:00:00'),
         ip: '192.168.1.102',
         dispositivo: 'Mozilla/5.0 (Linux; Android 11)',
@@ -485,3 +430,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
