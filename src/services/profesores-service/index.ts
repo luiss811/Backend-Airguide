@@ -260,6 +260,8 @@ app.post('/eventos', authenticate, requireProfesor, async (req: AuthRequest, res
         id_creador: creadorId,
         prioridad_evento: prioritadVal,
         total_invitados: data.total_invitados ?? 0,
+        es_de_paga: data.es_de_paga ?? false,
+        precio: data.precio ?? null
       },
       include: { edificio: true },
     });

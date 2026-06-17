@@ -149,6 +149,9 @@ model Evento {
   prioridad_evento   Int             @default(4)
   total_invitados    Int             @default(0)
   asistentes_confirmados Int         @default(0)
+  es_de_paga         Boolean         @default(false)
+  precio             Decimal?        @db.Decimal(10, 2)
+  invitados          InvitadoEvento[]
   
   edificio           Edificio        @relation(fields: [id_edificio], references: [id_edificio], onDelete: Cascade)
   creador            Usuario         @relation(fields: [id_creador], references: [id_usuario])
@@ -156,6 +159,25 @@ model Evento {
   @@index([id_edificio])
   @@index([fecha_inicio])
   @@map("eventos")
+}
+
+model InvitadoEvento {
+  id_invitado        Int             @id @default(autoincrement())
+  id_evento          Int
+  nombre             String
+  apellido           String
+  edad               Int
+  correo             String
+  asistencia         Boolean         @default(false)
+  monto_pagado       Decimal?        @db.Decimal(10, 2)
+  metodo_pago        String?
+  pagado             Boolean         @default(false)
+  fecha_registro     DateTime        @default(now())
+
+  evento             Evento          @relation(fields: [id_evento], references: [id_evento], onDelete: Cascade)
+
+  @@index([id_evento])
+  @@map("invitado_eventos")
 }
 
 model Ruta {

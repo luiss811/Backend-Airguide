@@ -11,6 +11,8 @@ export const createEventoSchema = z.object({
   id_creador: z.number().int().positive('ID de creador inválido').optional(),
   prioridad_evento: z.number().int().min(1).max(5).optional(),
   total_invitados: z.number().int().min(0).optional(),
+  es_de_paga: z.boolean().optional(),
+  precio: z.number().min(0).optional(),
 });
 
 export const updateEventoSchema = z.object({
@@ -24,6 +26,8 @@ export const updateEventoSchema = z.object({
   id_creador: z.number().int().positive('ID de creador inválido').optional(),
   prioridad_evento: z.number().int().min(1).max(5).optional(),
   total_invitados: z.number().int().min(0).optional(),
+  es_de_paga: z.boolean().optional(),
+  precio: z.number().min(0).optional(),
 });
 
 export type CreateEventoInput = z.infer<typeof createEventoSchema>;

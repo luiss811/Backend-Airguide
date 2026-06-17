@@ -43,6 +43,7 @@ app.use('/api/rutas', createProxyMiddleware({ target: 'http://localhost:3014', c
 app.use('/api/mapa', createProxyMiddleware({ target: 'http://localhost:3014/mapa', changeOrigin: true, pathRewrite: { '^/api/mapa': '' } }));
 app.use('/api/google', createProxyMiddleware({ target: 'http://localhost:3014/google', changeOrigin: true, pathRewrite: { '^/api/google': '' } }));
 app.use('/api/analytics', createProxyMiddleware({ target: 'http://localhost:3015', changeOrigin: true, pathRewrite: { '^/api/analytics': '' } }));
+app.use('/api/docentes', createProxyMiddleware({ target: 'http://localhost:3016', changeOrigin: true, pathRewrite: { '^/api/docentes': '' } }));
 app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api/'))
         return next();
