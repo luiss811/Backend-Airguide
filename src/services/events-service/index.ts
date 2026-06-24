@@ -39,7 +39,7 @@ app.get('/:id(\\d+)', async (req: AuthRequest, res: Response) => {
 app.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const data = createEventoSchema.parse(req.body);
-    const creadorId = parseInt(req.user!.userId);
+    const creadorId = data.id_creador ?? parseInt(req.user!.userId);
     const usuarioCreador = await prisma.usuario.findUnique({ where: { id_usuario: creadorId } });
     let prioridadVal = data.prioridad_evento;
     if (prioridadVal === undefined) {
@@ -89,9 +89,9 @@ app.put('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: 
     }
 
     if (data.fecha_inicio || data.fecha_fin || data.id_edificio) {
-       const dummyEvento = { ...existingEvento, ...data, prioridad_evento: prioridadVal };
-       const evaluacion = await evaluarEvento(dummyEvento as any);
-       if (!evaluacion.permitir) return res.status(409).json({ error: evaluacion.mensaje });
+      const dummyEvento = { ...existingEvento, ...data, prioridad_evento: prioridadVal };
+      const evaluacion = await evaluarEvento(dummyEvento as any);
+      if (!evaluacion.permitir) return res.status(409).json({ error: evaluacion.mensaje });
     }
 
     if (data.fecha_inicio) data.fecha_inicio = new Date(data.fecha_inicio) as any;

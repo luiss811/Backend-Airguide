@@ -1,9 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.caminoGeografico.deleteMany();
   await prisma.logAcceso.deleteMany();
   await prisma.rutaDetalle.deleteMany();
   await prisma.ruta.deleteMany();
@@ -148,6 +152,12 @@ async function main() {
       { nombre: 'Edificio de Idiomas', descripcion: 'División de lenguas extranjeras', latitud: 20.65506286044442, longitud: -100.40632227263758, tipo: 'academico', activo: true },
       { nombre: 'División Económica-Administrativa', descripcion: 'División Económica-Administrativa', latitud: 20.65379828424716, longitud: -100.40517874350944, tipo: 'academico', activo: true },
       { nombre: 'Entrada principal UTEQ', descripcion: 'Entrada principal de la universidad', latitud: 20.653229129293855, longitud: -100.40402422166468, tipo: 'academico', activo: true },
+      { nombre: 'Entrada Lateral', descripcion: 'Entrada lateralde la universidad', latitud: 20.653621, longitud: -100.403655, tipo: 'academico', activo: false },
+      { nombre: 'Entrada Cursos UTEQ', descripcion: 'Entrada para cursos de la UTEQ', latitud: 20.656271, longitud: -100.403197, tipo: 'academico', activo: true },
+      { nombre: 'Entrada 6 acceso al Auditorio', descripcion: 'Acceso 6 - Auditorio UTEQ', latitud: 20.655452, longitud: -100.406990, tipo: 'academico', activo: true },
+      { nombre: 'Entrada al estacionamiento', descripcion: 'Acceso al estacionamiento', latitud: 20.653522, longitud: -100.406109, tipo: 'academico', activo: true },
+      { nombre: 'Entrada al estacionamiento', descripcion: 'Acceso al estacionamiento', latitud: 20.653331, longitud: -100.404968, tipo: 'academico', activo: true },
+      { nombre: 'Entrada al estacionamiento', descripcion: 'Acceso al estacionamiento', latitud: 20.653678, longitud: -100.407221, tipo: 'academico', activo: true },
     ],
   });
 
@@ -286,6 +296,38 @@ dispositivo: 'Mozilla/5.0 (Linux; Android 11)',
       },
     ],
   });
+
+  // Sembrar CaminoGeografico desde export.geojson
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const geojsonPath = path.resolve(__dirname, '../Data/export.geojson');
+
+  if (fs.existsSync(geojsonPath)) {
+    const geojsonData = JSON.parse(fs.readFileSync(geojsonPath, 'utf8'));
+    const matchingFeatures = geojsonData.features.filter((f: any) => 
+      f.properties?.highway && ['footway', 'path', 'steps'].includes(f.properties.highway)
+    );
+
+    const caminosData = matchingFeatures.map((feature: any) => {
+      const idStr = feature.id || feature.properties?.["@id"] || '';
+      const match = idStr.match(/\d+/);
+      const osm_id = match ? BigInt(match[0]) : BigInt(0);
+      return {
+        osm_id,
+        tipo: feature.properties.highway,
+        geometria: feature.geometry,
+        activo: true
+      };
+    });
+
+    await prisma.caminoGeografico.createMany({
+      data: caminosData,
+      skipDuplicates: true
+    });
+    console.log(`Se sembraron ${caminosData.length} caminos geográficos.`);
+  } else {
+    console.warn(`No se encontró el archivo GeoJSON en: ${geojsonPath}`);
+  }
 }
 
 main()

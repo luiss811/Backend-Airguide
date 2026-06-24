@@ -26,7 +26,7 @@ app.get('/dashboard', authenticate, requireAdmin, async (req: AuthRequest, res: 
       totalAccesos: totalLogs,
     });
   } catch (error) {
-    return res.status(500).json({ error: 'Error interno' });
+    return res.status(500).json({ error: 'Parece que las estadísticas no están disponibles en este momento.' });
   }
 });
 
@@ -35,7 +35,7 @@ app.get('/edificios-tipo', authenticate, requireAdmin, async (req: AuthRequest, 
     const edificiosPorTipo = await prisma.edificio.groupBy({ by: ['tipo'], _count: { id_edificio: true }, where: { activo: true } });
     return res.json(edificiosPorTipo.map(item => ({ tipo: item.tipo, cantidad: item._count.id_edificio })));
   } catch (error) {
-    return res.status(500).json({ error: 'Error interno' });
+    return res.status(500).json({ error: 'Las estadísticas de los edificios no están disponibles en este momento.' });
   }
 });
 
@@ -48,7 +48,7 @@ app.get('/eventos-proximos', authenticate, requireAdmin, async (req: AuthRequest
     });
     return res.json(eventos);
   } catch (error) {
-    return res.status(500).json({ error: 'Error interno' });
+    return res.status(500).json({ error: 'Las estadísticas de los eventos próximos no están disponibles en este momento.' });
   }
 });
 
@@ -61,7 +61,7 @@ app.get('/accesos-recientes', authenticate, requireAdmin, async (req: AuthReques
     });
     return res.json(accesos);
   } catch (error) {
-    return res.status(500).json({ error: 'Error interno' });
+    return res.status(500).json({ error: 'Las estadísticas de accesos recientes no están disponibles en este momento.' });
   }
 });
 
@@ -75,7 +75,7 @@ app.get('/accesos-timeline', authenticate, requireAdmin, async (req: AuthRequest
     }, {} as Record<string, number>);
     return res.json(Object.entries(accesosPorDia).map(([fecha, count]) => ({ fecha, accesos: count })));
   } catch (error) {
-    return res.status(500).json({ error: 'Error interno' });
+    return res.status(500).json({ error: 'Las estadísticas de accesos por día no están disponibles en este momento.' });
   }
 });
 
@@ -84,7 +84,7 @@ app.get('/usuarios-rol', authenticate, requireAdmin, async (req: AuthRequest, re
     const usuariosPorRol = await prisma.usuario.groupBy({ by: ['rol', 'estado'], _count: { id_usuario: true } });
     return res.json(usuariosPorRol.map(item => ({ rol: item.rol, estado: item.estado, cantidad: item._count.id_usuario })));
   } catch (error) {
-    return res.status(500).json({ error: 'Error interno' });
+    return res.status(500).json({ error: 'Las estadísticas de usuarios no están disponibles en este momento.' });
   }
 });
 
@@ -112,7 +112,7 @@ app.get('/rutas-populares', authenticate, requireAdmin, async (req: AuthRequest,
 
     return res.json(response);
   } catch (error) {
-    return res.status(500).json({ error: 'Error interno' });
+    return res.status(500).json({ error: 'Las estadísticas de rutas populares no están disponibles en este momento.' });
   }
 });
 
@@ -121,7 +121,7 @@ app.post('/train-congestion', authenticate, requireAdmin, async (req: AuthReques
     const loss = await entrenarCongestion();
     return res.json({ message: 'Modelo de congestión entrenado con éxito', loss });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Error al entrenar congestión' });
+    return res.status(500).json({ error: error.message || 'No se pudo entrenar el modelo de congestión' });
   }
 });
 

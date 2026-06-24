@@ -1,7 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 const prisma = new PrismaClient();
 async function main() {
+    await prisma.caminoGeografico.deleteMany();
     await prisma.logAcceso.deleteMany();
     await prisma.rutaDetalle.deleteMany();
     await prisma.ruta.deleteMany();
@@ -135,6 +139,12 @@ async function main() {
             { nombre: 'Edificio de Idiomas', descripcion: 'División de lenguas extranjeras', latitud: 20.65506286044442, longitud: -100.40632227263758, tipo: 'academico', activo: true },
             { nombre: 'División Económica-Administrativa', descripcion: 'División Económica-Administrativa', latitud: 20.65379828424716, longitud: -100.40517874350944, tipo: 'academico', activo: true },
             { nombre: 'Entrada principal UTEQ', descripcion: 'Entrada principal de la universidad', latitud: 20.653229129293855, longitud: -100.40402422166468, tipo: 'academico', activo: true },
+            { nombre: 'Entrada Lateral', descripcion: 'Entrada lateralde la universidad', latitud: 20.653621, longitud: -100.403655, tipo: 'academico', activo: false },
+            { nombre: 'Entrada Cursos UTEQ', descripcion: 'Entrada para cursos de la UTEQ', latitud: 20.656271, longitud: -100.403197, tipo: 'academico', activo: true },
+            { nombre: 'Entrada 6 acceso al Auditorio', descripcion: 'Acceso 6 - Auditorio UTEQ', latitud: 20.655452, longitud: -100.406990, tipo: 'academico', activo: true },
+            { nombre: 'Entrada al estacionamiento', descripcion: 'Acceso al estacionamiento', latitud: 20.653522, longitud: -100.406109, tipo: 'academico', activo: true },
+            { nombre: 'Entrada al estacionamiento', descripcion: 'Acceso al estacionamiento', latitud: 20.653331, longitud: -100.404968, tipo: 'academico', activo: true },
+            { nombre: 'Entrada al estacionamiento', descripcion: 'Acceso al estacionamiento', latitud: 20.653678, longitud: -100.407221, tipo: 'academico', activo: true },
         ],
     });
     await prisma.salon.createMany({
@@ -164,72 +174,32 @@ async function main() {
     });
     await prisma.cubiculo.createMany({
         data: [
-            { id_cubiculo: 1, activo: true, id_edificio: 24, id_profesor: 2, numero: '201', piso: 1, referencia: 'Junto a la sala de lectura' },
-            { id_cubiculo: 2, activo: true, id_edificio: 28, id_profesor: 1, numero: '5', piso: 2, referencia: 'Subiendo las escaleras, entras por las puestas de cristal y a mano derecha, es el quinto cubiculo' },
-            { id_cubiculo: 3, activo: true, id_edificio: 28, id_profesor: 3, numero: 'AULA 12', piso: 2, referencia: 'Planta Alta' },
-            { id_cubiculo: 4, activo: true, id_edificio: 28, id_profesor: 4, numero: 'CISCO A12', piso: 1, referencia: 'Edificio J' },
-            { id_cubiculo: 5, activo: true, id_edificio: 28, id_profesor: 5, numero: 'CISCO CIC', piso: 1, referencia: 'Centro de Cómputo' },
-            { id_cubiculo: 6, activo: true, id_edificio: 28, id_profesor: 6, numero: 'DATAREA 11', piso: 2, referencia: 'Área de Datos' },
-            { id_cubiculo: 7, activo: true, id_edificio: 28, id_profesor: 7, numero: 'AREA 12', piso: 2, referencia: 'Área de Desarrollo' },
-            { id_cubiculo: 8, activo: true, id_edificio: 28, id_profesor: 8, numero: 'AREA 11', piso: 2, referencia: 'Planta Alta' },
-            { id_cubiculo: 9, activo: true, id_edificio: 28, id_profesor: 9, numero: 'SUMPA', piso: 1, referencia: 'Planta Baja' },
-            { id_cubiculo: 10, activo: true, id_edificio: 28, id_profesor: 10, numero: 'AULA 11', piso: 2, referencia: 'Planta Alta' },
-            { id_cubiculo: 11, activo: true, id_edificio: 28, id_profesor: 11, numero: 'AULA 17', piso: 2, referencia: 'Planta Alta' },
-            { id_cubiculo: 12, activo: true, id_edificio: 28, id_profesor: 12, numero: 'AULA 13', piso: 2, referencia: 'Planta Alta' },
-            { id_cubiculo: 13, activo: true, id_edificio: 28, id_profesor: 13, numero: 'EDIFICIO H', piso: 1, referencia: 'Área de Comunicación' },
-            { id_cubiculo: 14, activo: true, id_edificio: 28, id_profesor: 14, numero: 'AREA 11-I', piso: 2, referencia: 'Edificio I' },
-            { id_cubiculo: 15, activo: true, id_edificio: 28, id_profesor: 15, numero: 'AULA 16', piso: 2, referencia: 'Planta Alta' },
-            { id_cubiculo: 16, activo: true, id_edificio: 28, id_profesor: 16, numero: 'LADI 2', piso: 1, referencia: 'Laboratorio LADI' },
-            { id_cubiculo: 17, activo: true, id_edificio: 28, id_profesor: 17, numero: 'AREA 8', piso: 1, referencia: 'Planta Baja' }
+            { id_cubiculo: 1, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 2, numero: '201', piso: 1, referencia: 'Junto a la sala de lectura' },
+            { id_cubiculo: 2, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 1, numero: '5', piso: 2, referencia: 'Subiendo las escaleras, entras por las puestas de cristal y a mano derecha, es el quinto cubiculo' },
+            { id_cubiculo: 3, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 3, numero: 'AULA 12', piso: 2, referencia: 'Planta Alta' },
+            { id_cubiculo: 4, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 4, numero: 'CISCO A12', piso: 1, referencia: 'Edificio J' },
+            { id_cubiculo: 5, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 5, numero: 'CISCO CIC', piso: 1, referencia: 'Centro de Cómputo' },
+            { id_cubiculo: 6, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 6, numero: 'DATAREA 11', piso: 2, referencia: 'Área de Datos' },
+            { id_cubiculo: 7, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 7, numero: 'AREA 12', piso: 2, referencia: 'Área de Desarrollo' },
+            { id_cubiculo: 8, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 8, numero: 'AREA 11', piso: 2, referencia: 'Planta Alta' },
+            { id_cubiculo: 9, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 9, numero: 'SUMPA', piso: 1, referencia: 'Planta Baja' },
+            { id_cubiculo: 10, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 10, numero: 'AULA 11', piso: 2, referencia: 'Planta Alta' },
+            { id_cubiculo: 11, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 11, numero: 'AULA 17', piso: 2, referencia: 'Planta Alta' },
+            { id_cubiculo: 12, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 12, numero: 'AULA 13', piso: 2, referencia: 'Planta Alta' },
+            { id_cubiculo: 13, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 13, numero: 'EDIFICIO H', piso: 1, referencia: 'Área de Comunicación' },
+            { id_cubiculo: 14, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 14, numero: 'AREA 11-I', piso: 2, referencia: 'Edificio I' },
+            { id_cubiculo: 15, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 15, numero: 'AULA 16', piso: 2, referencia: 'Planta Alta' },
+            { id_cubiculo: 16, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 16, numero: 'LADI 2', piso: 1, referencia: 'Laboratorio LADI' },
+            { id_cubiculo: 17, activo: true, id_edificio: edificiok.id_edificio, id_profesor: 17, numero: 'AREA 8', piso: 1, referencia: 'Planta Baja' }
         ],
         skipDuplicates: true,
     });
     await prisma.evento.createMany({
         data: [
-            {
-                nombre: 'Feria Universitaria de Ciencias',
-                descripcion: 'Exposición anual de proyectos científicos y tecnológicos',
-                fecha_inicio: new Date('2026-03-15T09:00:00'),
-                fecha_fin: new Date('2026-03-15T18:00:00'),
-                id_edificio: auditorio.id_edificio,
-                id_creador: 1,
-                prioridad_evento: 4,
-                publico: true,
-                activo: true,
-            },
-            {
-                nombre: 'Conferencia de IA',
-                descripcion: 'Charla magistral sobre Inteligencia Artificial',
-                fecha_inicio: new Date('2026-03-20T14:00:00'),
-                fecha_fin: new Date('2026-03-20T16:00:00'),
-                id_edificio: industrial.id_edificio,
-                id_creador: 11,
-                prioridad_evento: 3,
-                publico: true,
-                activo: true,
-            },
-            {
-                nombre: 'Torneo Deportivo',
-                descripcion: 'Competencia deportiva',
-                fecha_inicio: new Date('2026-03-25T08:00:00'),
-                fecha_fin: new Date('2026-03-25T18:00:00'),
-                id_edificio: industrial.id_edificio,
-                id_creador: 12,
-                prioridad_evento: 3,
-                publico: true,
-                activo: true,
-            },
-            {
-                nombre: 'Semana Cultural',
-                descripcion: 'Festival cultural con presentaciones artísticas',
-                fecha_inicio: new Date('2026-04-01T10:00:00'),
-                fecha_fin: new Date('2026-04-05T20:00:00'),
-                id_edificio: auditorio.id_edificio,
-                id_creador: 1,
-                prioridad_evento: 2,
-                publico: true,
-                activo: true,
-            },
+            { nombre: 'Feria Universitaria de Ciencias', descripcion: 'Exposición anual de proyectos científicos y tecnológicos', fecha_inicio: new Date('2026-03-15T09:00:00'), fecha_fin: new Date('2026-03-15T18:00:00'), id_edificio: auditorio.id_edificio, id_creador: 1, prioridad_evento: 4, publico: true, activo: true },
+            { nombre: 'Conferencia de IA', descripcion: 'Charla magistral sobre Inteligencia Artificial', fecha_inicio: new Date('2026-03-20T14:00:00'), fecha_fin: new Date('2026-03-20T16:00:00'), id_edificio: industrial.id_edificio, id_creador: 11, prioridad_evento: 3, publico: true, activo: true },
+            { nombre: 'Torneo Deportivo', descripcion: 'Competencia deportiva', fecha_inicio: new Date('2026-03-25T08:00:00'), fecha_fin: new Date('2026-03-25T18:00:00'), id_edificio: industrial.id_edificio, id_creador: 12, prioridad_evento: 3, publico: true, activo: true },
+            { nombre: 'Semana Cultural', descripcion: 'Festival cultural con presentaciones artísticas', fecha_inicio: new Date('2026-04-01T10:00:00'), fecha_fin: new Date('2026-04-05T20:00:00'), id_edificio: auditorio.id_edificio, id_creador: 1, prioridad_evento: 2, publico: true, activo: true },
         ],
     });
     const ruta1 = await prisma.ruta.create({
@@ -267,112 +237,20 @@ async function main() {
     });
     await prisma.rutaDetalle.createMany({
         data: [
-            {
-                id_ruta: ruta1.id_ruta,
-                orden: 1,
-                instruccion: 'Salir de la Biblioteca Central por la puerta principal',
-                latitud: 20.654861,
-                longitud: -100.403784,
-            },
-            {
-                id_ruta: ruta1.id_ruta,
-                orden: 2,
-                instruccion: 'Girar a la izquierda y caminar por el paseo central',
-                latitud: 20.654700,
-                longitud: -100.403900,
-            },
-            {
-                id_ruta: ruta1.id_ruta,
-                orden: 3,
-                instruccion: 'Continuar recto hasta el cruce',
-                latitud: 20.654200,
-                longitud: -100.404000,
-            },
-            {
-                id_ruta: ruta1.id_ruta,
-                orden: 4,
-                instruccion: 'Girar a la derecha hacia el Laboratorio de mantenimiento industrial',
-                latitud: 20.653950,
-                longitud: -100.404100,
-            },
-            {
-                id_ruta: ruta1.id_ruta,
-                orden: 5,
-                instruccion: 'Entrar al Laboratorio por la entrada principal',
-                latitud: 20.653885,
-                longitud: -100.404127,
-            },
-        ],
-    });
-    await prisma.rutaDetalle.createMany({
-        data: [
-            {
-                id_ruta: ruta2.id_ruta,
-                orden: 1,
-                instruccion: 'Salir del Laboratorio de mantenimiento industrial',
-                latitud: 20.653885,
-                longitud: -100.404127,
-            },
-            {
-                id_ruta: ruta2.id_ruta,
-                orden: 2,
-                instruccion: 'Caminar hacia el norte por el paseo peatonal',
-                latitud: 20.654500,
-                longitud: -100.405000,
-            },
-            {
-                id_ruta: ruta2.id_ruta,
-                orden: 3,
-                instruccion: 'Continuar hasta ver el Auditorio de la UTEQ',
-                latitud: 20.655500,
-                longitud: -100.405500,
-            },
-            {
-                id_ruta: ruta2.id_ruta,
-                orden: 4,
-                instruccion: 'Llegar al Auditorio Principal',
-                latitud: 20.655928,
-                longitud: -100.405901,
-            },
-        ],
-    });
-    await prisma.rutaDetalle.createMany({
-        data: [
-            {
-                id_ruta: ruta3.id_ruta,
-                orden: 1,
-                instruccion: 'Salir de la Biblioteca Central',
-                latitud: 20.654861,
-                longitud: -100.403784,
-            },
-            {
-                id_ruta: ruta3.id_ruta,
-                orden: 2,
-                instruccion: 'Girar a la derecha y caminar por el jardín central',
-                latitud: 20.655000,
-                longitud: -100.404500,
-            },
-            {
-                id_ruta: ruta3.id_ruta,
-                orden: 3,
-                instruccion: 'Continuar por el camino principal',
-                latitud: 20.655400,
-                longitud: -100.405200,
-            },
-            {
-                id_ruta: ruta3.id_ruta,
-                orden: 4,
-                instruccion: 'Seguir las señalizaciones hacia el Auditorio',
-                latitud: 20.655700,
-                longitud: -100.405600,
-            },
-            {
-                id_ruta: ruta3.id_ruta,
-                orden: 5,
-                instruccion: 'Llegar al Auditorio Principal',
-                latitud: 20.655928,
-                longitud: -100.405901,
-            },
+            { id_ruta: ruta1.id_ruta, orden: 1, instruccion: 'Salir de la Biblioteca Central por la puerta principal', latitud: 20.654861, longitud: -100.403784 },
+            { id_ruta: ruta1.id_ruta, orden: 2, instruccion: 'Girar a la izquierda y caminar por el paseo central', latitud: 20.654700, longitud: -100.403900 },
+            { id_ruta: ruta1.id_ruta, orden: 3, instruccion: 'Continuar recto hasta el cruce', latitud: 20.654200, longitud: -100.404000 },
+            { id_ruta: ruta1.id_ruta, orden: 4, instruccion: 'Girar a la derecha hacia el Laboratorio de mantenimiento industrial', latitud: 20.653950, longitud: -100.404100 },
+            { id_ruta: ruta1.id_ruta, orden: 5, instruccion: 'Entrar al Laboratorio por la entrada principal', latitud: 20.653885, longitud: -100.404127 },
+            { id_ruta: ruta2.id_ruta, orden: 1, instruccion: 'Salir del Laboratorio de mantenimiento industrial', latitud: 20.653885, longitud: -100.404127 },
+            { id_ruta: ruta2.id_ruta, orden: 2, instruccion: 'Caminar hacia el norte por el paseo peatonal', latitud: 20.654500, longitud: -100.405000 },
+            { id_ruta: ruta2.id_ruta, orden: 3, instruccion: 'Continuar hasta ver el Auditorio de la UTEQ', latitud: 20.655500, longitud: -100.405500 },
+            { id_ruta: ruta2.id_ruta, orden: 4, instruccion: 'Llegar al Auditorio Principal', latitud: 20.655928, longitud: -100.405901 },
+            { id_ruta: ruta3.id_ruta, orden: 1, instruccion: 'Salir de la Biblioteca Central', latitud: 20.654861, longitud: -100.403784 },
+            { id_ruta: ruta3.id_ruta, orden: 2, instruccion: 'Girar a la derecha y caminar por el jardín central', latitud: 20.655000, longitud: -100.404500 },
+            { id_ruta: ruta3.id_ruta, orden: 3, instruccion: 'Continuar por el camino principal', latitud: 20.655400, longitud: -100.405200 },
+            { id_ruta: ruta3.id_ruta, orden: 4, instruccion: 'Seguir las señalizaciones hacia el Auditorio', latitud: 20.655700, longitud: -100.405600 },
+            { id_ruta: ruta3.id_ruta, orden: 5, instruccion: 'Llegar al Auditorio Principal', latitud: 20.655928, longitud: -100.405901 },
         ],
     });
     await prisma.logAcceso.createMany({
@@ -397,6 +275,33 @@ async function main() {
             },
         ],
     });
+    // Sembrar CaminoGeografico desde export.geojson
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const geojsonPath = path.resolve(__dirname, '../Data/export.geojson');
+    if (fs.existsSync(geojsonPath)) {
+        const geojsonData = JSON.parse(fs.readFileSync(geojsonPath, 'utf8'));
+        const matchingFeatures = geojsonData.features.filter((f) => f.properties?.highway && ['footway', 'path', 'steps'].includes(f.properties.highway));
+        const caminosData = matchingFeatures.map((feature) => {
+            const idStr = feature.id || feature.properties?.["@id"] || '';
+            const match = idStr.match(/\d+/);
+            const osm_id = match ? BigInt(match[0]) : BigInt(0);
+            return {
+                osm_id,
+                tipo: feature.properties.highway,
+                geometria: feature.geometry,
+                activo: true
+            };
+        });
+        await prisma.caminoGeografico.createMany({
+            data: caminosData,
+            skipDuplicates: true
+        });
+        console.log(`Se sembraron ${caminosData.length} caminos geográficos.`);
+    }
+    else {
+        console.warn(`No se encontró el archivo GeoJSON en: ${geojsonPath}`);
+    }
 }
 main()
     .catch((e) => {
