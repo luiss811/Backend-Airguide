@@ -4,7 +4,9 @@ import { authenticate, requireAdmin, AuthRequest } from '../../middleware/auth.m
 import { createRutaSchema, updateRutaSchema, createRutaDetalleSchema } from '../../validators/ruta.validator.js';
 import { predecirCongestionRuta } from '../../lib/congestionNeurona.js';
 
+
 const app = express();
+app.disable('x-powered-by');
 app.use(express.json());
 
 app.get('/', async (req: AuthRequest, res: Response) => {
@@ -21,17 +23,19 @@ app.get('/', async (req: AuthRequest, res: Response) => {
     });
     return res.json(rutas);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
-app.get('/:id(\\d+)', async (req: AuthRequest, res: Response) => {
+app.get(String.raw`/:id(\d+)`, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const ruta = await prisma.ruta.findUnique({ where: { id_ruta: Number(id) }, include: { detalles: { orderBy: { orden: 'asc' } } } });
     if (!ruta) return res.status(404).json({ error: 'Ruta no encontrada' });
     return res.json(ruta);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -42,7 +46,7 @@ app.post('/find', async (req: Request, res: Response) => {
     if (!origen_tipo || !origen_id || !destino_tipo || !destino_id) return res.status(400).json({ error: 'Se requieren origen y destino' });
 
     const ruta = await prisma.ruta.findFirst({
-      where: { origen_tipo, origen_id: parseInt(origen_id), destino_tipo, destino_id: parseInt(destino_id), activo: true },
+      where: { origen_tipo, origen_id: Number.parseInt(origen_id), destino_tipo, destino_id: Number.parseInt(destino_id), activo: true },
       include: { detalles: { orderBy: { orden: 'asc' } } },
     });
     if (!ruta) return res.status(404).json({ error: 'No se encontró una ruta' });
@@ -54,6 +58,7 @@ app.post('/find', async (req: Request, res: Response) => {
 
     return res.json(ruta);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -71,11 +76,12 @@ app.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Response
     });
     return res.status(201).json(ruta);
   } catch (error: any) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
-app.put('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.put(String.raw`/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const data = updateRutaSchema.parse(req.body);
@@ -84,21 +90,23 @@ app.put('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: 
     });
     return res.json(ruta);
   } catch (error: any) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
-app.delete('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.delete(String.raw`/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.ruta.delete({ where: { id_ruta: Number(id) } });
     return res.json({ message: 'Ruta eliminada' });
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
-app.post('/:id(\\d+)/detalles', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.post(String.raw`/:id(\d+)/detalles`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const data = createRutaDetalleSchema.parse(req.body);
@@ -107,16 +115,18 @@ app.post('/:id(\\d+)/detalles', authenticate, requireAdmin, async (req: AuthRequ
     });
     return res.status(201).json(detalle);
   } catch (error: any) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
-app.delete('/detalles/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.delete(String.raw`/detalles/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.rutaDetalle.delete({ where: { id_detalle: Number(id) } });
     return res.json({ message: 'Detalle eliminado' });
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -140,6 +150,7 @@ app.get('/mapa/data', async (req: Request, res: Response) => {
     };
     res.json(geojson);
   } catch (error) {
+      console.error(error);
     res.status(500).json({ error: 'Error interno del servidor al cargar mapas' });
   }
 });
@@ -163,6 +174,7 @@ app.post('/google/compute-route', authenticate, async (req: Request, res: Respon
     if (!response.ok) throw new Error('Error en Google Maps API');
     return res.json(data);
   } catch (error: any) {
+      console.error(error);
     return res.status(500).json({ error: 'No se pudo calcular la ruta' });
   }
 });
@@ -178,6 +190,7 @@ app.post('/check-congestion', async (req: Request, res: Response) => {
     const score = await predecirCongestionRuta(Number(id_ruta), currentHour);
     return res.json({ congested: score > 0.7, score, hour: currentHour });
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error analizando congestión' });
   }
 });
@@ -203,6 +216,7 @@ app.get('/heatmap', async (req: Request, res: Response) => {
 
     return res.json(heatmapData);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error generando heatmap global' });
   }
 });

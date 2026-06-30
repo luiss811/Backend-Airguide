@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 /** Generates a 6-digit numeric OTP */
 export function generateOtp(): string {

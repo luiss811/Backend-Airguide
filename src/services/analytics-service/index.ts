@@ -1,9 +1,11 @@
-import express, { Request, Response } from 'express';
+import express, { Response } from 'express';
 import { prisma } from '../../lib/prisma.js';
 import { authenticate, requireAdmin, AuthRequest } from '../../middleware/auth.middleware.js';
 import { entrenarCongestion } from '../../lib/congestionNeurona.js';
 
+
 const app = express();
+app.disable('x-powered-by');
 app.use(express.json());
 
 app.get('/dashboard', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
@@ -26,6 +28,7 @@ app.get('/dashboard', authenticate, requireAdmin, async (req: AuthRequest, res: 
       totalAccesos: totalLogs,
     });
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Parece que las estadísticas no están disponibles en este momento.' });
   }
 });
@@ -35,6 +38,7 @@ app.get('/edificios-tipo', authenticate, requireAdmin, async (req: AuthRequest, 
     const edificiosPorTipo = await prisma.edificio.groupBy({ by: ['tipo'], _count: { id_edificio: true }, where: { activo: true } });
     return res.json(edificiosPorTipo.map(item => ({ tipo: item.tipo, cantidad: item._count.id_edificio })));
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Las estadísticas de los edificios no están disponibles en este momento.' });
   }
 });
@@ -48,26 +52,28 @@ app.get('/eventos-proximos', authenticate, requireAdmin, async (req: AuthRequest
     });
     return res.json(eventos);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Las estadísticas de los eventos próximos no están disponibles en este momento.' });
   }
 });
 
 app.get('/accesos-recientes', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
-    const startDate = new Date(); startDate.setDate(startDate.getDate() - parseInt((req.query.days as string) || '7'));
+    const startDate = new Date(); startDate.setDate(startDate.getDate() - Number.parseInt((req.query.days as string) || '7'));
     const accesos = await prisma.logAcceso.findMany({
       where: { fecha: { gte: startDate } }, include: { usuario: { select: { nombre: true, correo: true, rol: true } } },
       orderBy: { fecha: 'desc' }, take: 50,
     });
     return res.json(accesos);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Las estadísticas de accesos recientes no están disponibles en este momento.' });
   }
 });
 
 app.get('/accesos-timeline', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
-    const startDate = new Date(); startDate.setDate(startDate.getDate() - parseInt((req.query.days as string) || '30'));
+    const startDate = new Date(); startDate.setDate(startDate.getDate() - Number.parseInt((req.query.days as string) || '30'));
     const accesos = await prisma.logAcceso.findMany({ where: { fecha: { gte: startDate } }, select: { fecha: true } });
     const accesosPorDia = accesos.reduce((acc, curr) => {
       const date = curr.fecha.toISOString().split('T')[0];
@@ -75,6 +81,7 @@ app.get('/accesos-timeline', authenticate, requireAdmin, async (req: AuthRequest
     }, {} as Record<string, number>);
     return res.json(Object.entries(accesosPorDia).map(([fecha, count]) => ({ fecha, accesos: count })));
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Las estadísticas de accesos por día no están disponibles en este momento.' });
   }
 });
@@ -84,6 +91,7 @@ app.get('/usuarios-rol', authenticate, requireAdmin, async (req: AuthRequest, re
     const usuariosPorRol = await prisma.usuario.groupBy({ by: ['rol', 'estado'], _count: { id_usuario: true } });
     return res.json(usuariosPorRol.map(item => ({ rol: item.rol, estado: item.estado, cantidad: item._count.id_usuario })));
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Las estadísticas de usuarios no están disponibles en este momento.' });
   }
 });
@@ -112,6 +120,7 @@ app.get('/rutas-populares', authenticate, requireAdmin, async (req: AuthRequest,
 
     return res.json(response);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Las estadísticas de rutas populares no están disponibles en este momento.' });
   }
 });

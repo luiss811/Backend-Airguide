@@ -70,7 +70,7 @@ async function inicializarNeurona() {
 export async function entrenarNeurona() {
   console.log("Reiniciando y reentrenando red neuronal a petición...");
   modelo = null; 
-  return await inicializarNeurona();
+  return inicializarNeurona();
 }
 
 /**
@@ -78,14 +78,6 @@ export async function entrenarNeurona() {
  */
 async function predecirMejorEdificio(fechaInicio: Date, fechaFin: Date, edificioEvitadoId: number): Promise<number | null> {
   if (!modelo) await inicializarNeurona();
-
-  const hora = fechaInicio.getHours();
-  const input = tf.tensor2d([hora], [1, 1]);
-  const prediccion = modelo!.predict(input) as tf.Tensor;
-  let idSugerido = Math.round(prediccion.dataSync()[0]);
-  
-  // Limitar al rango de IDs
-  idSugerido = Math.max(1, Math.min(idSugerido, maxEdificioId));
 
   // Buscar todos los edificios disponibles en ese horario
   const edificios = await prisma.edificio.findMany({
@@ -192,4 +184,4 @@ export async function evaluarEvento(nuevoEvento: any): Promise<any> {
   }
 
 // Inicializar de fondo al cargar el módulo
-inicializarNeurona().catch(console.error);
+await inicializarNeurona();

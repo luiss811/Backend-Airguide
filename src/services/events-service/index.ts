@@ -5,6 +5,7 @@ import { createEventoSchema, updateEventoSchema } from '../../validators/evento.
 import { evaluarEvento, entrenarNeurona } from '../../lib/eventoNeurona.js';
 
 const app = express();
+app.disable('x-powered-by');
 app.use(express.json());
 
 app.get('/', async (req: AuthRequest, res: Response) => {
@@ -21,17 +22,19 @@ app.get('/', async (req: AuthRequest, res: Response) => {
     });
     return res.json(eventos);
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
-app.get('/:id(\\d+)', async (req: AuthRequest, res: Response) => {
+app.get(String.raw`/:id(\d+)`, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const evento = await prisma.evento.findUnique({ where: { id_evento: Number(id) }, include: { edificio: true } });
     if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
     return res.json(evento);
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -39,7 +42,7 @@ app.get('/:id(\\d+)', async (req: AuthRequest, res: Response) => {
 app.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const data = createEventoSchema.parse(req.body);
-    const creadorId = data.id_creador ?? parseInt(req.user!.userId);
+    const creadorId = data.id_creador ?? Number.parseInt(req.user!.userId);
     const usuarioCreador = await prisma.usuario.findUnique({ where: { id_usuario: creadorId } });
     let prioridadVal = data.prioridad_evento;
     if (prioridadVal === undefined) {
@@ -69,12 +72,13 @@ app.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Response
     if (evaluacion.tipo === "DESPLAZAMIENTO_REALIZADO") responsePayload.warning = "El evento fue agendado desplazando otros.";
     return res.status(201).json(responsePayload);
   } catch (error: any) {
+    console.error(error);
     if (error.name === 'ZodError') return res.status(400).json({ error: error.errors[0].message });
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
-app.put('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.put(String.raw`/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const data = updateEventoSchema.parse(req.body);
@@ -102,16 +106,18 @@ app.put('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: 
     });
     return res.json(evento);
   } catch (error: any) {
+    console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
-app.delete('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.delete(String.raw`/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.evento.delete({ where: { id_evento: Number(id) } });
     return res.json({ message: 'Evento eliminado' });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -127,7 +133,7 @@ app.post('/entrenar-neurona', authenticate, requireAdmin, async (req: AuthReques
 });
 
 // Endpoint público para confirmar asistencia mediante código QR
-app.post('/:id(\\d+)/confirmar-asistencia', async (req: Request, res: Response) => {
+app.post(String.raw`/:id(\d+)/confirmar-asistencia`, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const evento = await prisma.evento.findUnique({ where: { id_evento: Number(id) } });
@@ -144,12 +150,13 @@ app.post('/:id(\\d+)/confirmar-asistencia', async (req: Request, res: Response) 
 
     return res.json({ message: 'Asistencia confirmada', asistentes_confirmados: actualizado.asistentes_confirmados });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: 'Error interno al confirmar asistencia' });
   }
 });
 
 // Endpoint to get the guest list for an event (requires authentication)
-app.get('/:id(\\d+)/invitados', authenticate, async (req: AuthRequest, res: Response) => {
+app.get(String.raw`/:id(\d+)/invitados`, authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const invitados = await prisma.invitadoEvento.findMany({
@@ -158,12 +165,13 @@ app.get('/:id(\\d+)/invitados', authenticate, async (req: AuthRequest, res: Resp
     });
     return res.json(invitados);
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: 'Error al obtener invitados' });
   }
 });
 
 // Public endpoint to register a guest (either free or paid event)
-app.post('/:id(\\d+)/registrar-invitado', async (req: Request, res: Response) => {
+app.post(String.raw`/:id(\d+)/registrar-invitado`, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { nombre, apellido, edad, correo, pagado, metodo_pago, monto_pagado } = req.body;
@@ -197,7 +205,7 @@ app.post('/:id(\\d+)/registrar-invitado', async (req: Request, res: Response) =>
 });
 
 // Public endpoint to scan guest ticket QR and confirm attendance
-app.post('/confirmar-ticket/:id_invitado(\\d+)', async (req: Request, res: Response) => {
+app.post(String.raw`/confirmar-ticket/:id_invitado(\d+)`, async (req: Request, res: Response) => {
   try {
     const { id_invitado } = req.params;
 

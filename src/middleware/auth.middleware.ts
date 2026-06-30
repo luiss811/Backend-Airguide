@@ -12,7 +12,7 @@ export interface AuthRequest extends Request {
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'No autorizado' });
     }
 
@@ -26,6 +26,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     req.user = decoded as any;
     next();
   } catch (error) {
+      console.error(error);
     return res.status(401).json({ error: 'No autorizado' });
   }
 };

@@ -9,7 +9,7 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'No se proporcionó token de autenticación' });
     }
 
@@ -19,6 +19,7 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
     req.user = payload;
     next();
   } catch (error) {
+      console.error(error);
     return res.status(401).json({ error: 'Token inválido o expirado' });
   }
 }

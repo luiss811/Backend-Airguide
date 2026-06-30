@@ -4,13 +4,15 @@ import { authenticate, requireProfesor, AuthRequest } from '../../middleware/aut
 import { createEventoSchema, updateEventoSchema } from '../../validators/evento.validator.js';
 import { evaluarEvento } from '../../lib/eventoNeurona.js';
 
+
 const app = express();
+app.disable('x-powered-by');
 app.use(express.json({ limit: '10mb' })); // Allow larger payloads for PDF base64 upload
 
 // GET /me: Retrieve professor's personal data, profile, and cubicle info
 app.get('/me', authenticate, requireProfesor, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = parseInt(req.user!.userId);
+    const userId = Number.parseInt(req.user!.userId);
 
     const usuario = await prisma.usuario.findUnique({
       where: { id_usuario: userId },
@@ -53,7 +55,7 @@ app.get('/me', authenticate, requireProfesor, async (req: AuthRequest, res: Resp
 // PUT /me: Update professor's personal data, status, department, PDF schedule, and cubicle
 app.put('/me', authenticate, requireProfesor, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = parseInt(req.user!.userId);
+    const userId = Number.parseInt(req.user!.userId);
     const {
       nombre,
       correo,
@@ -96,7 +98,7 @@ app.put('/me', authenticate, requireProfesor, async (req: AuthRequest, res: Resp
       data: {
         nombre: nombre || undefined,
         correo: correo || undefined,
-        matricula: matricula !== undefined ? matricula : undefined,
+        matricula: matricula,
       },
     });
 
@@ -105,12 +107,12 @@ app.put('/me', authenticate, requireProfesor, async (req: AuthRequest, res: Resp
       where: { id_usuario: userId },
     });
 
-    if (!profesor) {
+    if (profesor === null) {
       profesor = await prisma.profesor.create({
         data: {
           id_usuario: userId,
           departamento: departamento || 'General',
-          activo: activo !== undefined ? activo : true,
+          activo: activo ?? true,
           horario_pdf: horario_pdf || null,
         },
       });
@@ -118,21 +120,21 @@ app.put('/me', authenticate, requireProfesor, async (req: AuthRequest, res: Resp
       profesor = await prisma.profesor.update({
         where: { id_profesor: profesor.id_profesor },
         data: {
-          departamento: departamento !== undefined ? departamento : undefined,
-          activo: activo !== undefined ? activo : undefined,
-          horario_pdf: horario_pdf !== undefined ? horario_pdf : undefined,
+          departamento: departamento,
+          activo: activo,
+          horario_pdf: horario_pdf,
         },
       });
     }
 
     // 5. Update or Create Cubicle
     if (cubiculo) {
-      const edificioId = parseInt(cubiculo.id_edificio);
-      const piso = parseInt(cubiculo.piso);
+      const edificioId = Number.parseInt(cubiculo.id_edificio);
+      const piso = Number.parseInt(cubiculo.piso);
       const numero = cubiculo.numero;
       const referencia = cubiculo.referencia || null;
 
-      if (!isNaN(edificioId) && numero) {
+      if (!Number.isNaN(edificioId) && numero) {
         const existingCubiculo = await prisma.cubiculo.findFirst({
           where: { id_profesor: profesor.id_profesor },
         });
@@ -142,7 +144,7 @@ app.put('/me', authenticate, requireProfesor, async (req: AuthRequest, res: Resp
             where: { id_cubiculo: existingCubiculo.id_cubiculo },
             data: {
               id_edificio: edificioId,
-              piso: isNaN(piso) ? 1 : piso,
+              piso: Number.isNaN(piso) ? 1 : piso,
               numero,
               referencia,
             },
@@ -152,7 +154,7 @@ app.put('/me', authenticate, requireProfesor, async (req: AuthRequest, res: Resp
             data: {
               id_profesor: profesor.id_profesor,
               id_edificio: edificioId,
-              piso: isNaN(piso) ? 1 : piso,
+              piso: Number.isNaN(piso) ? 1 : piso,
               numero,
               referencia,
               activo: true,
@@ -232,7 +234,7 @@ app.get('/eventos', authenticate, requireProfesor, async (req: AuthRequest, res:
 app.post('/eventos', authenticate, requireProfesor, async (req: AuthRequest, res: Response) => {
   try {
     const data = createEventoSchema.parse(req.body);
-    const creadorId = parseInt(req.user!.userId);
+    const creadorId = Number.parseInt(req.user!.userId);
 
     // Forces teacher restrictions: fixed creator and priority = 3
     const prioritadVal = 3;
@@ -282,11 +284,11 @@ app.post('/eventos', authenticate, requireProfesor, async (req: AuthRequest, res
 });
 
 // PUT /eventos/:id: Update an event only if the professor is the creator
-app.put('/eventos/:id(\\d+)', authenticate, requireProfesor, async (req: AuthRequest, res: Response) => {
+app.put(String.raw`/eventos/:id(\d+)`, authenticate, requireProfesor, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const data = updateEventoSchema.parse(req.body);
-    const creadorId = parseInt(req.user!.userId);
+    const creadorId = Number.parseInt(req.user!.userId);
 
     const existingEvento = await prisma.evento.findUnique({
       where: { id_evento: Number(id) },
@@ -340,10 +342,10 @@ app.put('/eventos/:id(\\d+)', authenticate, requireProfesor, async (req: AuthReq
 });
 
 // DELETE /eventos/:id: Delete an event only if the professor is the creator
-app.delete('/eventos/:id(\\d+)', authenticate, requireProfesor, async (req: AuthRequest, res: Response) => {
+app.delete(String.raw`/eventos/:id(\d+)`, authenticate, requireProfesor, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const creadorId = parseInt(req.user!.userId);
+    const creadorId = Number.parseInt(req.user!.userId);
 
     const existingEvento = await prisma.evento.findUnique({
       where: { id_evento: Number(id) },
@@ -371,3 +373,39 @@ app.delete('/eventos/:id(\\d+)', authenticate, requireProfesor, async (req: Auth
 
 const PORT = 3016;
 app.listen(PORT, () => console.log('Servicio de profesores corriendo'));
+
+async function updateOrCreateCubicle(cubiculo: any, id_profesor: number) {
+  const edificioId = Number.parseInt(cubiculo.id_edificio);
+  const piso = Number.parseInt(cubiculo.piso);
+  const numero = cubiculo.numero;
+  const referencia = cubiculo.referencia || null;
+
+  if (Number.isNaN(edificioId) || !numero) return;
+
+  const existingCubiculo = await prisma.cubiculo.findFirst({
+    where: { id_profesor },
+  });
+
+  if (existingCubiculo) {
+    await prisma.cubiculo.update({
+      where: { id_cubiculo: existingCubiculo.id_cubiculo },
+      data: {
+        id_edificio: edificioId,
+        piso: Number.isNaN(piso) ? 1 : piso,
+        numero,
+        referencia,
+      },
+    });
+  } else {
+    await prisma.cubiculo.create({
+      data: {
+        id_profesor,
+        id_edificio: edificioId,
+        piso: Number.isNaN(piso) ? 1 : piso,
+        numero,
+        referencia,
+        activo: true,
+      },
+    });
+  }
+}

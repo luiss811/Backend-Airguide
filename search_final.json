@@ -1,0 +1,584 @@
+{
+  "total": 7,
+  "p": 1,
+  "ps": 500,
+  "paging": {
+    "pageIndex": 1,
+    "pageSize": 500,
+    "total": 7
+  },
+  "effortTotal": 41,
+  "issues": [
+    {
+      "key": "2735fdf8-6e99-4104-9c5b-98cc8098e31b",
+      "rule": "typescript:S1854",
+      "severity": "MAJOR",
+      "component": "AirGuide:src/lib/eventoNeurona.ts",
+      "project": "AirGuide",
+      "line": 84,
+      "hash": "e60dd860c8975022e3d4d57fba393cf8",
+      "textRange": {
+        "startLine": 84,
+        "endLine": 84,
+        "startOffset": 8,
+        "endOffset": 18
+      },
+      "flows": [],
+      "status": "OPEN",
+      "message": "Remove this useless assignment to variable \"prediccion\".",
+      "effort": "1min",
+      "debt": "1min",
+      "author": "",
+      "tags": [
+        "cwe",
+        "unused"
+      ],
+      "creationDate": "2026-06-30T00:35:09+0000",
+      "updateDate": "2026-06-30T00:35:09+0000",
+      "type": "CODE_SMELL",
+      "scope": "MAIN",
+      "quickFixAvailable": false,
+      "messageFormattings": [],
+      "codeVariants": [],
+      "cleanCodeAttribute": "LOGICAL",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "MEDIUM"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "prioritizedRule": false,
+      "fromSonarQubeUpdate": false,
+      "internalTags": [],
+      "linkedTicketStatus": "NOT_LINKED"
+    },
+    {
+      "key": "f32642ee-8c24-4062-9b33-3b7978bf0fe1",
+      "rule": "typescript:S125",
+      "severity": "MAJOR",
+      "component": "AirGuide:src/lib/eventoNeurona.ts",
+      "project": "AirGuide",
+      "line": 85,
+      "hash": "597bb61450e349bd6cf78cb0cf41035f",
+      "textRange": {
+        "startLine": 85,
+        "endLine": 85,
+        "startOffset": 2,
+        "endOffset": 59
+      },
+      "flows": [],
+      "status": "OPEN",
+      "message": "Remove this commented out code.",
+      "effort": "5min",
+      "debt": "5min",
+      "author": "",
+      "tags": [
+        "unused"
+      ],
+      "creationDate": "2026-06-30T00:35:09+0000",
+      "updateDate": "2026-06-30T00:35:09+0000",
+      "type": "CODE_SMELL",
+      "scope": "MAIN",
+      "quickFixAvailable": true,
+      "messageFormattings": [],
+      "codeVariants": [],
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "MEDIUM"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "prioritizedRule": false,
+      "fromSonarQubeUpdate": false,
+      "internalTags": [],
+      "linkedTicketStatus": "NOT_LINKED"
+    },
+    {
+      "key": "0ad6c40c-b465-4d05-86e1-26e2c34237df",
+      "rule": "typescript:S3776",
+      "severity": "CRITICAL",
+      "component": "AirGuide:src/services/profesores-service/index.ts",
+      "project": "AirGuide",
+      "line": 56,
+      "hash": "54b090f533e4c509495341cfc4fe3393",
+      "textRange": {
+        "startLine": 56,
+        "endLine": 56,
+        "startOffset": 86,
+        "endOffset": 88
+      },
+      "flows": [
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 70,
+                "endLine": 70,
+                "startOffset": 4,
+                "endOffset": 6
+              },
+              "msg": "+1",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 77,
+                "endLine": 77,
+                "startOffset": 6,
+                "endOffset": 8
+              },
+              "msg": "+2 (incl. 1 for nesting)",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 83,
+                "endLine": 83,
+                "startOffset": 4,
+                "endOffset": 6
+              },
+              "msg": "+1",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 90,
+                "endLine": 90,
+                "startOffset": 6,
+                "endOffset": 8
+              },
+              "msg": "+2 (incl. 1 for nesting)",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 110,
+                "endLine": 110,
+                "startOffset": 4,
+                "endOffset": 6
+              },
+              "msg": "+1",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 119,
+                "endLine": 119,
+                "startOffset": 6,
+                "endOffset": 10
+              },
+              "msg": "+1",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 131,
+                "endLine": 131,
+                "startOffset": 4,
+                "endOffset": 6
+              },
+              "msg": "+1",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 137,
+                "endLine": 137,
+                "startOffset": 6,
+                "endOffset": 8
+              },
+              "msg": "+2 (incl. 1 for nesting)",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 137,
+                "endLine": 137,
+                "startOffset": 36,
+                "endOffset": 38
+              },
+              "msg": "+1",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 142,
+                "endLine": 142,
+                "startOffset": 8,
+                "endOffset": 10
+              },
+              "msg": "+3 (incl. 2 for nesting)",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 152,
+                "endLine": 152,
+                "startOffset": 10,
+                "endOffset": 14
+              },
+              "msg": "+1",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 147,
+                "endLine": 147,
+                "startOffset": 39,
+                "endOffset": 40
+              },
+              "msg": "+4 (incl. 3 for nesting)",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 157,
+                "endLine": 157,
+                "startOffset": 39,
+                "endOffset": 40
+              },
+              "msg": "+4 (incl. 3 for nesting)",
+              "msgFormattings": []
+            }
+          ]
+        },
+        {
+          "locations": [
+            {
+              "component": "AirGuide:src/services/profesores-service/index.ts",
+              "textRange": {
+                "startLine": 196,
+                "endLine": 196,
+                "startOffset": 4,
+                "endOffset": 9
+              },
+              "msg": "+1",
+              "msgFormattings": []
+            }
+          ]
+        }
+      ],
+      "status": "REOPENED",
+      "message": "Refactor this function to reduce its Cognitive Complexity from 25 to the 15 allowed.",
+      "effort": "15min",
+      "debt": "15min",
+      "author": "voguishbaton@gmail.com",
+      "tags": [
+        "brain-overload"
+      ],
+      "creationDate": "2026-05-25T20:34:56+0000",
+      "updateDate": "2026-06-30T00:29:59+0000",
+      "type": "CODE_SMELL",
+      "scope": "MAIN",
+      "quickFixAvailable": false,
+      "messageFormattings": [],
+      "codeVariants": [],
+      "cleanCodeAttribute": "FOCUSED",
+      "cleanCodeAttributeCategory": "ADAPTABLE",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "HIGH"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "prioritizedRule": false,
+      "fromSonarQubeUpdate": false,
+      "internalTags": [],
+      "linkedTicketStatus": "NOT_LINKED"
+    },
+    {
+      "key": "2cc73ba5-030c-476d-b012-49fa99585ec1",
+      "rule": "typescript:S6606",
+      "severity": "MINOR",
+      "component": "AirGuide:src/services/events-service/index.ts",
+      "project": "AirGuide",
+      "line": 90,
+      "hash": "51b468be798a8b85c5b9dcfd75bbfc70",
+      "textRange": {
+        "startLine": 90,
+        "endLine": 92,
+        "startOffset": 4,
+        "endOffset": 5
+      },
+      "flows": [],
+      "status": "REOPENED",
+      "message": "Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read.",
+      "effort": "5min",
+      "debt": "5min",
+      "author": "voguishbaton@gmail.com",
+      "tags": [
+        "type-dependent",
+        "nullish-coalescing",
+        "es2020"
+      ],
+      "creationDate": "2026-04-14T17:11:22+0000",
+      "updateDate": "2026-06-30T00:29:59+0000",
+      "type": "CODE_SMELL",
+      "scope": "MAIN",
+      "quickFixAvailable": true,
+      "messageFormattings": [],
+      "codeVariants": [],
+      "cleanCodeAttribute": "CONVENTIONAL",
+      "cleanCodeAttributeCategory": "CONSISTENT",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "LOW"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "prioritizedRule": false,
+      "fromSonarQubeUpdate": false,
+      "internalTags": [],
+      "linkedTicketStatus": "NOT_LINKED"
+    },
+    {
+      "key": "392cd77c-d1b3-424d-a41d-e06e019e22a6",
+      "rule": "typescript:S6606",
+      "severity": "MINOR",
+      "component": "AirGuide:src/lib/congestionNeurona.ts",
+      "project": "AirGuide",
+      "line": 27,
+      "hash": "b08d9118ede9b9661864c195304376bf",
+      "textRange": {
+        "startLine": 27,
+        "endLine": 29,
+        "startOffset": 2,
+        "endOffset": 3
+      },
+      "flows": [],
+      "status": "REOPENED",
+      "message": "Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read.",
+      "effort": "5min",
+      "debt": "5min",
+      "author": "voguishbaton@gmail.com",
+      "tags": [
+        "type-dependent",
+        "nullish-coalescing",
+        "es2020"
+      ],
+      "creationDate": "2026-04-13T21:06:57+0000",
+      "updateDate": "2026-06-30T00:29:59+0000",
+      "type": "CODE_SMELL",
+      "scope": "MAIN",
+      "quickFixAvailable": true,
+      "messageFormattings": [],
+      "codeVariants": [],
+      "cleanCodeAttribute": "CONVENTIONAL",
+      "cleanCodeAttributeCategory": "CONSISTENT",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "LOW"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "prioritizedRule": false,
+      "fromSonarQubeUpdate": false,
+      "internalTags": [],
+      "linkedTicketStatus": "NOT_LINKED"
+    },
+    {
+      "key": "9a858bb7-d449-49cc-88a3-4edafb1736ca",
+      "rule": "typescript:S5689",
+      "severity": "MINOR",
+      "component": "AirGuide:src/services/events-service/index.ts",
+      "project": "AirGuide",
+      "line": 7,
+      "hash": "4af77bcf43147b78489dd9c4043bfe01",
+      "textRange": {
+        "startLine": 7,
+        "endLine": 7,
+        "startOffset": 6,
+        "endOffset": 9
+      },
+      "flows": [],
+      "status": "REOPENED",
+      "message": "This framework implicitly discloses version information by default. Make sure it is safe here.",
+      "effort": "5min",
+      "debt": "5min",
+      "author": "voguishbaton@gmail.com",
+      "tags": [
+        "cwe",
+        "express.js",
+        "former-hotspot"
+      ],
+      "creationDate": "2026-04-04T05:18:18+0000",
+      "updateDate": "2026-06-30T00:29:59+0000",
+      "type": "VULNERABILITY",
+      "scope": "MAIN",
+      "quickFixAvailable": false,
+      "messageFormattings": [],
+      "codeVariants": [],
+      "cleanCodeAttribute": "TRUSTWORTHY",
+      "cleanCodeAttributeCategory": "RESPONSIBLE",
+      "impacts": [
+        {
+          "softwareQuality": "SECURITY",
+          "severity": "LOW"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "prioritizedRule": false,
+      "fromSonarQubeUpdate": false,
+      "internalTags": [],
+      "linkedTicketStatus": "NOT_LINKED"
+    },
+    {
+      "key": "2e682274-3d2b-49de-b07e-1af7a0982f6e",
+      "rule": "typescript:S7785",
+      "severity": "MAJOR",
+      "component": "AirGuide:src/lib/eventoNeurona.ts",
+      "project": "AirGuide",
+      "line": 195,
+      "hash": "6ca133e3105b931d41840218ec7c2277",
+      "textRange": {
+        "startLine": 195,
+        "endLine": 195,
+        "startOffset": 21,
+        "endOffset": 26
+      },
+      "flows": [],
+      "status": "OPEN",
+      "message": "Prefer top-level await over using a promise chain.",
+      "effort": "5min",
+      "debt": "5min",
+      "author": "voguishbaton@gmail.com",
+      "tags": [
+        "async",
+        "es2022",
+        "esm-only",
+        "modernize"
+      ],
+      "creationDate": "2026-04-01T00:14:41+0000",
+      "updateDate": "2026-06-30T00:35:09+0000",
+      "type": "CODE_SMELL",
+      "scope": "MAIN",
+      "quickFixAvailable": false,
+      "messageFormattings": [],
+      "codeVariants": [],
+      "cleanCodeAttribute": "CONVENTIONAL",
+      "cleanCodeAttributeCategory": "CONSISTENT",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "MEDIUM"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "prioritizedRule": false,
+      "fromSonarQubeUpdate": false,
+      "internalTags": [],
+      "linkedTicketStatus": "NOT_LINKED"
+    }
+  ],
+  "components": [
+    {
+      "key": "AirGuide:src/services/profesores-service/index.ts",
+      "enabled": true,
+      "qualifier": "FIL",
+      "name": "index.ts",
+      "longName": "src/services/profesores-service/index.ts",
+      "path": "src/services/profesores-service/index.ts"
+    },
+    {
+      "key": "AirGuide:src/services/events-service/index.ts",
+      "enabled": true,
+      "qualifier": "FIL",
+      "name": "index.ts",
+      "longName": "src/services/events-service/index.ts",
+      "path": "src/services/events-service/index.ts"
+    },
+    {
+      "key": "AirGuide:src/lib/eventoNeurona.ts",
+      "enabled": true,
+      "qualifier": "FIL",
+      "name": "eventoNeurona.ts",
+      "longName": "src/lib/eventoNeurona.ts",
+      "path": "src/lib/eventoNeurona.ts"
+    },
+    {
+      "key": "AirGuide",
+      "enabled": true,
+      "qualifier": "TRK",
+      "name": "AirGuide",
+      "longName": "AirGuide"
+    },
+    {
+      "key": "AirGuide:src/lib/congestionNeurona.ts",
+      "enabled": true,
+      "qualifier": "FIL",
+      "name": "congestionNeurona.ts",
+      "longName": "src/lib/congestionNeurona.ts",
+      "path": "src/lib/congestionNeurona.ts"
+    }
+  ],
+  "facets": []
+}

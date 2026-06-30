@@ -1,9 +1,11 @@
-import express, { Request, Response } from 'express';
+import express, { Response } from 'express';
 import { prisma } from '../../lib/prisma.js';
 import { authenticate, requireAdmin, AuthRequest } from '../../middleware/auth.middleware.js';
 import { createEdificioSchema, updateEdificioSchema } from '../../validators/edificio.validator.js';
 
+
 const app = express();
+app.disable('x-powered-by');
 app.use(express.json());
 
 // Get edificios
@@ -52,7 +54,7 @@ app.get('/salones', async (req: AuthRequest, res: Response) => {
 });
 
 // Get edificio id
-app.get('/:id(\\d+)', async (req: AuthRequest, res: Response) => {
+app.get(String.raw`/:id(\d+)`, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -99,7 +101,7 @@ app.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Response
 });
 
 // Update edificio
-app.put('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.put(String.raw`/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const data = updateEdificioSchema.parse(req.body);
@@ -116,18 +118,19 @@ app.put('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: 
 });
 
 // Delete edificio
-app.delete('/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.delete(String.raw`/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.edificio.delete({ where: { id_edificio: Number(id) } });
     return res.json({ message: 'Edificio eliminado' });
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
 // Get salones by edificio
-app.get('/:id(\\d+)/salones', async (req: AuthRequest, res: Response) => {
+app.get(String.raw`/:id(\d+)/salones`, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const salones = await prisma.salon.findMany({
@@ -136,12 +139,13 @@ app.get('/:id(\\d+)/salones', async (req: AuthRequest, res: Response) => {
     });
     return res.json(salones);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
 // Create salon
-app.post('/:id(\\d+)/salones', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.post(String.raw`/:id(\d+)/salones`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { nombre, piso, tipo, activo } = req.body;
@@ -149,17 +153,18 @@ app.post('/:id(\\d+)/salones', authenticate, requireAdmin, async (req: AuthReque
     if (!edificio) return res.status(404).json({ error: 'Edificio no encontrado' });
 
     const salon = await prisma.salon.create({
-      data: { id_edificio: Number(id), nombre, piso, tipo, activo: activo !== undefined ? activo : true },
+      data: { id_edificio: Number(id), nombre, piso, tipo, activo: activo ?? true },
       include: { edificio: { select: { id_edificio: true, nombre: true, tipo: true } } },
     });
     return res.status(201).json(salon);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
 // Update salon
-app.put('/salones/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.put(String.raw`/salones/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -169,17 +174,19 @@ app.put('/salones/:id(\\d+)', authenticate, requireAdmin, async (req: AuthReques
     });
     return res.json(salon);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
 // Delete salon
-app.delete('/salones/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.delete(String.raw`/salones/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.salon.delete({ where: { id_salon: Number(id) } });
     return res.json({ message: 'Salón eliminado' });
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -195,12 +202,13 @@ app.get('/profesores', async (req: AuthRequest, res: Response) => {
     });
     return res.json(profesor);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
 // Get single profesor
-app.get('/profesores/:id(\\d+)', async (req: AuthRequest, res: Response) => {
+app.get(String.raw`/profesores/:id(\d+)`, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const profesor = await prisma.profesor.findUnique({
@@ -213,6 +221,7 @@ app.get('/profesores/:id(\\d+)', async (req: AuthRequest, res: Response) => {
     if (!profesor) return res.status(404).json({ error: 'Profesor no encontrado' });
     return res.json(profesor);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -221,22 +230,23 @@ app.get('/profesores/:id(\\d+)', async (req: AuthRequest, res: Response) => {
 app.post('/profesores', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id_usuario, departamento, id_cubiculo, activo } = req.body;
-    await prisma.usuario.update({ where: { id_usuario: parseInt(id_usuario) }, data: { rol: 'profesor' } });
+    await prisma.usuario.update({ where: { id_usuario: Number.parseInt(id_usuario) }, data: { rol: 'profesor' } });
     const profesor = await prisma.profesor.create({
-      data: { id_usuario: parseInt(id_usuario), departamento, activo: activo !== undefined ? activo : true },
+      data: { id_usuario: Number.parseInt(id_usuario), departamento, activo: activo ?? true },
       include: { usuario: { select: { nombre: true, correo: true } }, cubiculos: { include: { edificio: { select: { id_edificio: true, nombre: true } } } } }
     });
     if (id_cubiculo) {
-      await prisma.cubiculo.update({ where: { id_cubiculo: parseInt(id_cubiculo) }, data: { id_profesor: profesor.id_profesor } });
+      await prisma.cubiculo.update({ where: { id_cubiculo: Number.parseInt(id_cubiculo) }, data: { id_profesor: profesor.id_profesor } });
     }
     return res.status(201).json(profesor);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
 // Update profesor
-app.put('/profesores/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.put(String.raw`/profesores/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -245,21 +255,23 @@ app.put('/profesores/:id(\\d+)', authenticate, requireAdmin, async (req: AuthReq
       include: { usuario: { select: { nombre: true, correo: true } }, cubiculos: { include: { edificio: { select: { id_edificio: true, nombre: true } } } } }
     });
     if (updateData.id_cubiculo) {
-      await prisma.cubiculo.update({ where: { id_cubiculo: parseInt(updateData.id_cubiculo) }, data: { id_profesor: profesor.id_profesor } });
+      await prisma.cubiculo.update({ where: { id_cubiculo: Number.parseInt(updateData.id_cubiculo) }, data: { id_profesor: profesor.id_profesor } });
     }
     return res.json(profesor);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
 
 // Delete profesor
-app.delete('/profesores/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.delete(String.raw`/profesores/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.profesor.delete({ where: { id_profesor: Number(id) } });
     return res.json({ message: 'Profesor eliminado' });
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno' });
   }
 });
@@ -279,6 +291,7 @@ app.get('/cubiculos', async (req: AuthRequest, res: Response) => {
     });
     return res.json(cubiculos);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -289,10 +302,10 @@ app.post('/cubiculos', authenticate, requireAdmin, async (req: AuthRequest, res:
     const { id_profesor, id_edificio, numero, piso, referencia, activo } = req.body;
     const cubiculo = await prisma.cubiculo.create({
       data: {
-        id_profesor: parseInt(id_profesor),
-        id_edificio: parseInt(id_edificio),
+        id_profesor: Number.parseInt(id_profesor),
+        id_edificio: Number.parseInt(id_edificio),
         numero,
-        piso: parseInt(piso),
+        piso: Number.parseInt(piso),
         referencia,
         activo: activo ?? true
       },
@@ -303,22 +316,23 @@ app.post('/cubiculos', authenticate, requireAdmin, async (req: AuthRequest, res:
     });
     return res.status(201).json(cubiculo);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error al crear cubículo' });
   }
 });
 
 // Update cubiculo
-app.put('/cubiculos/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.put(String.raw`/cubiculos/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { id_profesor, id_edificio, numero, piso, referencia, activo } = req.body;
     const cubiculo = await prisma.cubiculo.update({
-      where: { id_cubiculo: parseInt(id as string) },
+      where: { id_cubiculo: Number.parseInt(id as string) },
       data: {
-        id_profesor: parseInt(id_profesor),
-        id_edificio: parseInt(id_edificio),
+        id_profesor: Number.parseInt(id_profesor),
+        id_edificio: Number.parseInt(id_edificio),
         numero,
-        piso: parseInt(piso),
+        piso: Number.parseInt(piso),
         referencia,
         activo
       },
@@ -329,17 +343,19 @@ app.put('/cubiculos/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequ
     });
     return res.json(cubiculo);
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error al actualizar cubículo' });
   }
 });
 
 // Delete cubiculo
-app.delete('/cubiculos/:id(\\d+)', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
+app.delete(String.raw`/cubiculos/:id(\d+)`, authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.cubiculo.delete({ where: { id_cubiculo: parseInt(id as string) } });
+    await prisma.cubiculo.delete({ where: { id_cubiculo: Number.parseInt(id as string) } });
     return res.json({ message: 'Cubículo eliminado exitosamente' });
   } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error al eliminar cubículo' });
   }
 });

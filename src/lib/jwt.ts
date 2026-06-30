@@ -19,6 +19,7 @@ export function verifyToken(token: string): JwtPayload {
   try {
     return jwt.verify(token, JWT_SECRET) as JwtPayload;
   } catch (error) {
+      console.error(error);
     throw new Error('Token inválido o expirado');
   }
 }

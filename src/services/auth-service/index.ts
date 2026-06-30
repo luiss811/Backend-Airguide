@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import cors from 'cors';
+
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../lib/prisma.js';
 import { generateToken } from '../../lib/jwt.js';
@@ -8,7 +8,9 @@ import { generateOtp, getOtpExpiry } from '../../lib/otp.js';
 import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '../../validators/auth.validator.js';
 import { authenticate, requireAdmin, AuthRequest } from '../../middleware/auth.middleware.js';
 
+
 const app = express();
+app.disable('x-powered-by');
 app.use(express.json());
 
 // Login
@@ -154,7 +156,7 @@ app.post('/resend-otp', async (req: Request, res: Response) => {
 
     const usuario = await prisma.usuario.findUnique({ where: { correo } });
 
-    if (!usuario || usuario.estado !== 'activo') {
+    if (usuario?.estado !== 'activo') {
       // Return success to avoid email enumeration
       return res.json({ message: 'Si el correo existe, recibirás un nuevo código.' });
     }
@@ -337,7 +339,7 @@ app.post('/reset-password', async (req: Request, res: Response) => {
 app.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const usuario = await prisma.usuario.findUnique({
-      where: { id_usuario: parseInt(req.user!.userId) },
+      where: { id_usuario: Number.parseInt(req.user!.userId) },
       select: {
         id_usuario: true,
         correo: true,

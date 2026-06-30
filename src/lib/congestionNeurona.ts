@@ -51,7 +51,7 @@ export async function entrenarCongestion() {
     // En una universidad, hay más tráfico antes y después de clases (7-8, 14-15, 18-19 hrs)
     // El contador_usos escala la congestión base de una ruta
     let iteraciones = 200; // Fake historic epoch points
-    const picosHorarios = [7, 8, 13, 14, 18, 19];
+    const picosHorarios = new Set([7, 8, 13, 14, 18, 19]);
     
     // Normalizador aproximado de usos para evitar explotar la sigmoide
     const maxUsos = Math.max(...rutasActivas.map(r => r.contador_usos), 10);
@@ -63,18 +63,18 @@ export async function entrenarCongestion() {
         
         // Asignamos una hora aleatoria
         const horaHipotetica = Math.floor(Math.random() * 24);
-        const esPico = picosHorarios.includes(horaHipotetica) ? 1.0 : 0.0;
+        const esPico = picosHorarios.has(horaHipotetica) ? 1 : 0;
         
         let congestionScore = usosNormalized * 0.3; // Base risk given by its popularity
         
-        if (picosHorarios.includes(horaHipotetica)) {
+        if (picosHorarios.has(horaHipotetica)) {
             congestionScore += 0.6 + (Math.random() * 0.1); // Pico de muchedumbre
         } else if (horaHipotetica > 20 || horaHipotetica < 6) {
             congestionScore *= 0.1; // Desierta en madrugadas
         }
 
-        // Capping a 1.0
-        congestionScore = Math.min(congestionScore, 1.0);
+        // Capping a 1
+        congestionScore = Math.min(congestionScore, 1);
 
         inputs.push([horaHipotetica / 24, esPico, usosNormalized]);
         outputs.push([congestionScore]);
@@ -93,7 +93,7 @@ export async function entrenarCongestion() {
     ys.dispose();
 
     isTraining = false;
-    return info.history.loss[info.history.loss.length - 1]; // Retornar error final
+    return info.history.loss.at(-1); // Retornar error final
   } catch (error) {
     isTraining = false;
     throw error;
@@ -109,7 +109,7 @@ export async function predecirCongestionRuta(idRuta: number, horaLocal: number):
         select: { contador_usos: true }
     });
     
-    if (!ruta) return 0.0;
+    if (!ruta) return 0;
     
     // Consultar cual es el uso máximo actual de todas las rutas (costoso individualmente pero simple aquí, realísticamente deberíamos cacharlo)
     const stats = await prisma.ruta.aggregate({ _max: { contador_usos: true }});
@@ -117,8 +117,8 @@ export async function predecirCongestionRuta(idRuta: number, horaLocal: number):
     
     const usosNormalized = ruta.contador_usos / maxUsos;
 
-    const picosHorarios = [7, 8, 13, 14, 18, 19];
-    const esPico = picosHorarios.includes(horaLocal) ? 1.0 : 0.0;
+    const picosHorarios = new Set([7, 8, 13, 14, 18, 19]);
+    const esPico = picosHorarios.has(horaLocal) ? 1 : 0;
 
     const inputData = tf.tensor2d([[horaLocal / 24, esPico, usosNormalized]], [1, 3]);
     const score = modeloRef.predict(inputData) as tf.Tensor;
