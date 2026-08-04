@@ -1,4 +1,13 @@
 node_modules
-.env
+/logs
+
+
+package-lock.json
 docker-compose.yml
+gen.conf
+sca-report.json
+zap_report.html
+
+
+.env
 .scanerwork
