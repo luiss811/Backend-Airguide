@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
 /**
- * Middleware de Registración (Logging) de Eventos de Seguridad.
- * Registra intentos fallidos de autenticación, errores 4xx/5xx y acceso a rutas críticas.
+ * Middleware de Seguridad (Logging).
+ * Registra intentos fallidos de autenticacion, errores 4xx/5xx y accesos a rutas importantes.
  */
 export const securityLogger = (req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
@@ -12,7 +12,6 @@ export const securityLogger = (req: Request, res: Response, next: NextFunction) 
     const statusCode = res.statusCode;
     const ip = req.ip || req.socket.remoteAddress;
 
-    // Detectar eventos anómalos o de seguridad
     if (statusCode === 401 || statusCode === 403) {
       console.warn(`[SECURITY ALERT - AUTH FAILURE] ${new Date().toISOString()} | IP: ${ip} | Method: ${req.method} | Path: ${req.path} | Status: ${statusCode}`);
     } else if (statusCode >= 400 && statusCode < 500) {

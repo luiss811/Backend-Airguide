@@ -4,27 +4,11 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { securityHeaders } from '../middleware/securityHeaders';
+import { securityLogger } from '../middleware/securityLogger';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config();
-
-const app = express();
-const PORT = process.env.PORT || 3001;
-
-const corsOptions = {
-  origin: [
-    'https://*',
-    'http://localhost:5173',
-    'https://airguide-lac.vercel.app',
-    'https://*.vercel.app'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
-
+app.use(securityHeaders);
+app.use(securityLogger);
 app.use(cors(corsOptions));
 
 // Handle OPTIONS preflight for all routes BEFORE proxies
