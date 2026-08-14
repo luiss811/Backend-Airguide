@@ -5,6 +5,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 const prisma = new PrismaClient();
 async function main() {
+    await prisma.ventaProducto.deleteMany();
+    await prisma.venta.deleteMany();
+    await prisma.producto.deleteMany();
     await prisma.caminoGeografico.deleteMany();
     await prisma.logAcceso.deleteMany();
     await prisma.rutaDetalle.deleteMany();
@@ -302,6 +305,110 @@ async function main() {
     else {
         console.warn(`No se encontró el archivo GeoJSON en: ${geojsonPath}`);
     }
+    const playera1 = await prisma.producto.create({
+        data: {
+            nombre: 'Playera Algodón UTEQ Oficial',
+            descripcion: 'Playera 100% algodón peinado con escudo oficial de la UTEQ bordado en el pecho.',
+            precio: 250.00,
+            categoria: 'playera',
+            stock: 45,
+            imagen_url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80',
+            activo: true
+        }
+    });
+    const playera2 = await prisma.producto.create({
+        data: {
+            nombre: 'Playera Sport Halcones UTEQ',
+            descripcion: 'Playera deportiva de secado rápido con gráfico institucional Halcones.',
+            precio: 290.00,
+            categoria: 'playera',
+            stock: 30,
+            imagen_url: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500&auto=format&fit=crop&q=80',
+            activo: true
+        }
+    });
+    const termo1 = await prisma.producto.create({
+        data: {
+            nombre: 'Termo Acero Inoxidable UTEQ 750ml',
+            descripcion: 'Termo con doble pared al vacío, mantiene bebidas frías por 24h y calientes por 12h.',
+            precio: 340.00,
+            categoria: 'termo',
+            stock: 25,
+            imagen_url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&auto=format&fit=crop&q=80',
+            activo: true
+        }
+    });
+    const termo2 = await prisma.producto.create({
+        data: {
+            nombre: 'Termo Inteligente con Pantalla LED UTEQ',
+            descripcion: 'Muestra la temperatura de tu bebida en tiempo real. Edición especial con grabado láser.',
+            precio: 420.00,
+            categoria: 'termo',
+            stock: 15,
+            imagen_url: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=500&auto=format&fit=crop&q=80',
+            activo: true
+        }
+    });
+    const llavero1 = await prisma.producto.create({
+        data: {
+            nombre: 'Llavero Metálico Escudo UTEQ',
+            descripcion: 'Llavero de aleación de zinc de alta resistencia con acabado cromado y relieve 3D.',
+            precio: 85.00,
+            categoria: 'llavero',
+            stock: 100,
+            imagen_url: 'https://images.unsplash.com/photo-1582142407894-ec85a1260aee?w=500&auto=format&fit=crop&q=80',
+            activo: true
+        }
+    });
+    const llavero2 = await prisma.producto.create({
+        data: {
+            nombre: 'Llavero Acrílico Mascota Halcón',
+            descripcion: 'Llavero de acrílico cristalino resistente a rayones con la mascota oficial.',
+            precio: 60.00,
+            categoria: 'llavero',
+            stock: 80,
+            imagen_url: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=500&auto=format&fit=crop&q=80',
+            activo: true
+        }
+    });
+    const sudadera1 = await prisma.producto.create({
+        data: {
+            nombre: 'Sudadera Hoodie UTEQ Classic',
+            descripcion: 'Sudadera con gorro y bolsa canguro, interior afelpado súper suave y cálido.',
+            precio: 580.00,
+            categoria: 'sudadera',
+            stock: 20,
+            imagen_url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=500&auto=format&fit=crop&q=80',
+            activo: true
+        }
+    });
+    const sudadera2 = await prisma.producto.create({
+        data: {
+            nombre: 'Sudadera Zip Halcones Premium',
+            descripcion: 'Sudadera con cierre completo metálico, bordados de alta densidad en manga y espalda.',
+            precio: 650.00,
+            categoria: 'sudadera',
+            stock: 12,
+            imagen_url: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=500&auto=format&fit=crop&q=80',
+            activo: true
+        }
+    });
+    const venta1 = await prisma.venta.create({
+        data: {
+            id_usuario: 2,
+            cliente_nombre: 'Juan Pérez García',
+            cliente_correo: '2023171011@uteq.edu.mx',
+            total: 590.00,
+            metodo_pago: 'tarjeta',
+            estado: 'completado',
+            detalles: {
+                create: [
+                    { id_producto: playera1.id_producto, cantidad: 1, precio_unitario: 250.00, subtotal: 250.00 },
+                    { id_producto: termo1.id_producto, cantidad: 1, precio_unitario: 340.00, subtotal: 340.00 }
+                ]
+            }
+        }
+    });
 }
 main()
     .catch((e) => {

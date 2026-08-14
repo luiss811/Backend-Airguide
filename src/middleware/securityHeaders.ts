@@ -4,7 +4,7 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
   // Content Security Policy (CSP)
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://airguide-lac.vercel.app http://localhost:3001;"
+    "default-src 'self' http: https: ws: wss: data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http: https: ws: wss:;"
   );
 
   // HTTP Strict Transport Security
@@ -25,7 +25,7 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
   // Permissions-Policy
   res.setHeader(
     'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(self)'
+    'geolocation=(self)'
   );
 
   res.removeHeader('X-Powered-By');

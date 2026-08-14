@@ -341,6 +341,192 @@ app.delete('/cubiculos/:id(\\d+)', authenticate, requireAdmin, async (req, res) 
         return res.status(500).json({ error: 'Error al eliminar cubículo' });
     }
 });
+// ==========================================
+// E-COMMERCE: PRODUCTOS & VENTAS ENDPOINTS
+// ==========================================
+// GET /productos
+app.get('/productos', async (req, res) => {
+    try {
+        const { categoria, activo, search } = req.query;
+        const where = {};
+        if (categoria && categoria !== 'todos')
+            where.categoria = String(categoria);
+        if (activo !== undefined)
+            where.activo = activo === 'true';
+        if (search) {
+            where.OR = [
+                { nombre: { contains: String(search), mode: 'insensitive' } },
+                { descripcion: { contains: String(search), mode: 'insensitive' } },
+            ];
+        }
+        const productos = await prisma.producto.findMany({
+            where,
+            orderBy: { id_producto: 'desc' },
+        });
+        return res.json(productos);
+    }
+    catch (error) {
+        console.error('Get productos error:', error);
+        return res.status(500).json({ error: 'Error al obtener productos' });
+    }
+});
+// GET /productos/:id
+app.get('/productos/:id(\\d+)', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const producto = await prisma.producto.findUnique({
+            where: { id_producto: Number(id) },
+        });
+        if (!producto)
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        return res.json(producto);
+    }
+    catch (error) {
+        return res.status(500).json({ error: 'Error al obtener producto' });
+    }
+});
+// POST /productos (Admin)
+app.post('/productos', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const { nombre, descripcion, precio, categoria, stock, imagen_url, activo } = req.body;
+        if (!nombre || precio === undefined || !categoria) {
+            return res.status(400).json({ error: 'Nombre, precio y categoría son requeridos' });
+        }
+        const producto = await prisma.producto.create({
+            data: {
+                nombre,
+                descripcion,
+                precio: Number(precio),
+                categoria,
+                stock: Number(stock || 0),
+                imagen_url,
+                activo: activo !== undefined ? Boolean(activo) : true,
+            },
+        });
+        return res.status(201).json(producto);
+    }
+    catch (error) {
+        console.error('Create producto error:', error);
+        return res.status(500).json({ error: 'Error al crear producto' });
+    }
+});
+// PUT /productos/:id (Admin)
+app.put('/productos/:id(\\d+)', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, descripcion, precio, categoria, stock, imagen_url, activo } = req.body;
+        const dataToUpdate = {};
+        if (nombre !== undefined)
+            dataToUpdate.nombre = nombre;
+        if (descripcion !== undefined)
+            dataToUpdate.descripcion = descripcion;
+        if (precio !== undefined)
+            dataToUpdate.precio = Number(precio);
+        if (categoria !== undefined)
+            dataToUpdate.categoria = categoria;
+        if (stock !== undefined)
+            dataToUpdate.stock = Number(stock);
+        if (imagen_url !== undefined)
+            dataToUpdate.imagen_url = imagen_url;
+        if (activo !== undefined)
+            dataToUpdate.activo = Boolean(activo);
+        const producto = await prisma.producto.update({
+            where: { id_producto: Number(id) },
+            data: dataToUpdate,
+        });
+        return res.json(producto);
+    }
+    catch (error) {
+        console.error('Update producto error:', error);
+        return res.status(500).json({ error: 'Error al actualizar producto' });
+    }
+});
+// DELETE /productos/:id (Admin)
+app.delete('/productos/:id(\\d+)', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.producto.delete({ where: { id_producto: Number(id) } });
+        return res.json({ message: 'Producto eliminado exitosamente' });
+    }
+    catch (error) {
+        console.error('Delete producto error:', error);
+        return res.status(500).json({ error: 'Error al eliminar producto' });
+    }
+});
+// POST /ventas (Crear venta / checkout)
+app.post('/ventas', async (req, res) => {
+    try {
+        const { id_usuario, cliente_nombre, cliente_correo, metodo_pago, items } = req.body;
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'El carrito no contiene productos' });
+        }
+        // Verificar existencias y calcular total
+        let totalCalculado = 0;
+        const detallesData = [];
+        for (const item of items) {
+            const prod = await prisma.producto.findUnique({ where: { id_producto: item.id_producto } });
+            if (!prod) {
+                return res.status(404).json({ error: `Producto ID ${item.id_producto} no encontrado` });
+            }
+            if (prod.stock < item.cantidad) {
+                return res.status(400).json({ error: `Stock insuficiente para ${prod.nombre}` });
+            }
+            const subtotal = Number(prod.precio) * Number(item.cantidad);
+            totalCalculado += subtotal;
+            detallesData.push({
+                id_producto: prod.id_producto,
+                cantidad: Number(item.cantidad),
+                precio_unitario: Number(prod.precio),
+                subtotal,
+            });
+            // Descontar stock
+            await prisma.producto.update({
+                where: { id_producto: prod.id_producto },
+                data: { stock: prod.stock - Number(item.cantidad) },
+            });
+        }
+        const venta = await prisma.venta.create({
+            data: {
+                id_usuario: id_usuario ? Number(id_usuario) : null,
+                cliente_nombre,
+                cliente_correo,
+                total: totalCalculado,
+                metodo_pago: metodo_pago || 'tarjeta',
+                estado: 'completado',
+                detalles: {
+                    create: detallesData,
+                },
+            },
+            include: {
+                detalles: {
+                    include: { producto: true },
+                },
+            },
+        });
+        return res.status(201).json(venta);
+    }
+    catch (error) {
+        console.error('Create venta error:', error);
+        return res.status(500).json({ error: 'Error al procesar la venta' });
+    }
+});
+// GET /ventas (Admin listing)
+app.get('/ventas', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const ventas = await prisma.venta.findMany({
+            include: {
+                usuario: { select: { nombre: true, correo: true } },
+                detalles: { include: { producto: { select: { nombre: true, categoria: true } } } },
+            },
+            orderBy: { fecha_venta: 'desc' },
+        });
+        return res.json(ventas);
+    }
+    catch (error) {
+        console.error('Get ventas error:', error);
+        return res.status(500).json({ error: 'Error al consultar ventas' });
+    }
+});
 const PORT = process.env.PORT_BUILDINGS || 3012;
 app.listen(PORT, () => console.log('Servicio de Edificios corriendo'));
 //# sourceMappingURL=index.js.map

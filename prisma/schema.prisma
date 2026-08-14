@@ -70,6 +70,7 @@ model Usuario {
   eventos_creados    Evento[]
   profesor_perfil    Profesor?
   codigos_otp        CodigoOtp[]
+  ventas             Venta[]
 
   @@map("usuarios")
 }
@@ -250,4 +251,54 @@ model CaminoGeografico {
   activo           Boolean         @default(true)
 
   @@map("caminos_geograficos")
+}
+
+model Producto {
+  id_producto        Int             @id @default(autoincrement())
+  nombre             String
+  descripcion        String?         @db.Text
+  precio             Decimal         @db.Decimal(10, 2)
+  categoria          String          // 'playera', 'termo', 'llavero', 'sudadera', etc.
+  stock              Int             @default(0)
+  imagen_url         String?         @db.Text
+  activo             Boolean         @default(true)
+  fecha_creacion     DateTime        @default(now())
+
+  ventas_productos   VentaProducto[]
+
+  @@map("productos")
+}
+
+model Venta {
+  id_venta           Int             @id @default(autoincrement())
+  id_usuario         Int?
+  cliente_nombre     String?
+  cliente_correo     String?
+  total              Decimal         @db.Decimal(10, 2)
+  metodo_pago        String          @default("tarjeta") // 'tarjeta', 'efectivo', 'transferencia'
+  estado             String          @default("completado") // 'completado', 'pendiente', 'cancelado'
+  fecha_venta        DateTime        @default(now())
+
+  usuario            Usuario?        @relation(fields: [id_usuario], references: [id_usuario], onDelete: SetNull)
+  detalles           VentaProducto[]
+
+  @@index([id_usuario])
+  @@index([fecha_venta])
+  @@map("ventas")
+}
+
+model VentaProducto {
+  id_venta_producto  Int             @id @default(autoincrement())
+  id_venta           Int
+  id_producto        Int
+  cantidad           Int
+  precio_unitario    Decimal         @db.Decimal(10, 2)
+  subtotal           Decimal         @db.Decimal(10, 2)
+
+  venta              Venta           @relation(fields: [id_venta], references: [id_venta], onDelete: Cascade)
+  producto           Producto        @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade)
+
+  @@index([id_venta])
+  @@index([id_producto])
+  @@map("ventas_productos")
 }

@@ -7,13 +7,12 @@ let modelo = null;
 let maxEdificioId = 21; // Valor por defecto
 /**
  * Inicializa y entrena la red neuronal predictiva de recintos.
- * Simula el aprendizaje basado en hora -> edificio ideal.
  */
 async function inicializarNeurona() {
     if (modelo)
         return;
     console.log("Inicializando y entrenando red neuronal de eventos...");
-    // Rango de edificios basado en la DB
+    // Rango de edificios
     const edificios = await prisma.edificio.findMany({ select: { id_edificio: true } });
     if (edificios.length > 0) {
         maxEdificioId = Math.max(...edificios.map(e => e.id_edificio));
@@ -32,7 +31,6 @@ async function inicializarNeurona() {
         }
     }
     else {
-        // Fallback o mock si no hay eventos
         inputData = [[8], [10], [12], [14], [16], [18], [20]];
         outputData = [[1], [2], [Math.min(3, maxEdificioId)], [1], [2], [1], [Math.min(3, maxEdificioId)]];
     }
@@ -52,9 +50,6 @@ async function inicializarNeurona() {
         epochs: Array.from({ length: 200 }, (_, i) => i + 1)
     };
 }
-/**
- * Entrena manual y forzosamente la red y devuelve su historial.
- */
 export async function entrenarNeurona() {
     console.log("Reiniciando y reentrenando red neuronal a petición...");
     modelo = null;
@@ -88,7 +83,7 @@ async function predecirMejorEdificio(fechaInicio, fechaFin, edificioEvitadoId) {
             }
         });
         if (!eventosConflictivos) {
-            // Retorna el primer edificio sin conflictos (en un caso real, ordenado por similitud a `idSugerido`)
+            // Retorna el primer edificio sin conflictos
             return edificio.id_edificio;
         }
     }
@@ -120,7 +115,7 @@ export async function evaluarEvento(nuevoEvento) {
     for (const eventoAfectado of eventosConflicto) {
         const prioridadAfectado = eventoAfectado.prioridad_evento;
         if (prioridadNuevo > prioridadAfectado) {
-            // Ejecutar desplazamiento con AI
+            // Ejecutar desplazamiento
             const nuevoIdEdificio = await predecirMejorEdificio(eventoAfectado.fecha_inicio, eventoAfectado.fecha_fin, eventoAfectado.id_edificio);
             if (!nuevoIdEdificio) {
                 return {

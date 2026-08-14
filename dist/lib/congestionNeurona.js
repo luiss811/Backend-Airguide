@@ -24,22 +24,19 @@ export function getModelo() {
     }
     return modelo;
 }
-// Entrenar con datos dinámicos extraídos de Prisma
 export async function entrenarCongestion() {
     if (isTraining)
         throw new Error("El modelo ya se está entrenando en este momento.");
     isTraining = true;
     try {
         getModelo(); // Asegurar que está creado
-        // Obtener estadísticas reales
+        // Obtener estadisticas
         const rutasActivas = await prisma.ruta.findMany({
             where: { activo: true },
             select: { contador_usos: true }
         });
         const inputs = [];
         const outputs = [];
-        // Generar muestras simulando picos escolares
-        // En una universidad, hay más tráfico antes y después de clases (7-8, 14-15, 18-19 hrs)
         // El contador_usos escala la congestión base de una ruta
         let iteraciones = 200; // Fake historic epoch points
         const picosHorarios = [7, 8, 13, 14, 18, 19];
