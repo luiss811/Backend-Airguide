@@ -330,5 +330,10 @@ app.delete('/eventos/:id(\\d+)', authenticate, requireProfesor, async (req, res)
     }
 });
 const PORT = 3016;
-app.listen(PORT, () => console.log('Servicio de profesores corriendo'));
+/* v8 ignore start */
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => console.log('Servicio de profesores corriendo'));
+}
+/* v8 ignore stop */
+export { app };
 //# sourceMappingURL=index.js.map

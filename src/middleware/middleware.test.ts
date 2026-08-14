@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { securityHeaders } from './securityHeaders.js';
 import { securityLogger } from './securityLogger.js';
-import { authenticate, requireAdmin, requireProfesor } from './auth.middleware.ts';
+import { authenticate, requireAdmin, requireProfesor } from './auth.middleware.js';
 import { generateToken } from '../lib/jwt.js';
 import * as jwtLib from '../lib/jwt.js';
 
@@ -64,7 +64,7 @@ describe('Middleware Utilities', () => {
       const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn() };
       const next = vi.fn();
 
-      const verifySpy = vi.spyOn(jwtLib, 'verifyToken').mockReturnValueOnce(null);
+      const verifySpy = vi.spyOn(jwtLib, 'verifyToken').mockReturnValueOnce(null as any);
       await authenticate(req, res, next);
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({ error: 'Token inválido' });

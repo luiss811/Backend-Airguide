@@ -51,14 +51,19 @@ app.get('*', (req, res, next) => {
 app.use('/api/*', (req, res) => {
     res.status(404).json({ error: 'Ruta de Gateway no encontrada' });
 });
-app.listen(PORT, () => {
-    console.log(`
-    |----------------------------------------------------------------|
-    |                                                                |
-    |    AirGuide API Gateway                                        |
-    |                                                                |
-    |     Listening on PORT: ${PORT}                                    |
-    |----------------------------------------------------------------|
-  `);
-});
+/* v8 ignore start */
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`
+      |----------------------------------------------------------------|
+      |                                                                |
+      |    AirGuide API Gateway                                        |
+      |                                                                |
+      |     Listening on PORT: ${PORT}                                    |
+      |----------------------------------------------------------------|
+    `);
+    });
+}
+/* v8 ignore stop */
+export { app };
 //# sourceMappingURL=index.js.map
