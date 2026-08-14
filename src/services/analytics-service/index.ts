@@ -126,4 +126,10 @@ app.post('/train-congestion', authenticate, requireAdmin, async (req: AuthReques
 });
 
 const PORT = process.env.PORT_ANALYTICS || 3015;
-app.listen(PORT, () => console.log('Servicio de Analytics corriendo'));
+/* v8 ignore start */
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => console.log('Servicio de Analytics corriendo'));
+}
+/* v8 ignore stop */
+
+export { app };

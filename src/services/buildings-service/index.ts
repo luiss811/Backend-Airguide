@@ -533,5 +533,11 @@ app.get('/ventas', authenticate, requireAdmin, async (req: AuthRequest, res: Res
 });
 
 const PORT = process.env.PORT_BUILDINGS || 3012;
-app.listen(PORT, () => console.log('Servicio de Edificios corriendo'));
+/* v8 ignore start */
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => console.log('Servicio de Edificios corriendo'));
+}
+/* v8 ignore stop */
+
+export { app };
 

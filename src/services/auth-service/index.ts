@@ -435,4 +435,10 @@ app.get('/users', authenticate, requireAdmin, async (req: AuthRequest, res: Resp
 });
 
 const PORT = process.env.PORT_AUTH || 3011;
-app.listen(PORT, () => {  console.log('Servicio de Autenticación corriendo');});
+/* v8 ignore start */
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {  console.log('Servicio de Autenticación corriendo');});
+}
+/* v8 ignore stop */
+
+export { app };

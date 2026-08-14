@@ -249,4 +249,10 @@ app.post('/confirmar-ticket/:id_invitado(\\d+)', async (req: Request, res: Respo
 });
 
 const PORT = process.env.PORT_EVENTS || 3013;
-app.listen(PORT, () => console.log('Servicio de Eventos corriendo'));
+/* v8 ignore start */
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => console.log('Servicio de Eventos corriendo'));
+}
+/* v8 ignore stop */
+
+export { app };
