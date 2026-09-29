@@ -1,0 +1,75 @@
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import { securityHeaders } from '../middleware/securityHeaders.js';
+import { securityLogger } from '../middleware/securityLogger.js';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+const corsOptions = {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(securityHeaders);
+app.use(securityLogger);
+app.use(cors(corsOptions));
+
+// Handle OPTIONS preflight for all routes BEFORE proxies
+app.options('*', cors(corsOptions));
+
+// Servir frontend static si estamos en producción
+const frontendPath = path.join(__dirname, '../../../dist');
+app.use(express.static(frontendPath));
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  console.log(`[GATEWAY] ${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
+// HEALTH CHECK
+app.get('/health', (req: Request, res: Response) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), service: 'API Gateway' });
+});
+
+// Proxies
+app.use('/api/auth', createProxyMiddleware({ target: 'http://localhost:3011', changeOrigin: true, pathRewrite: {'^/api/auth': ''} }));
+app.use('/api/edificios', createProxyMiddleware({ target: 'http://localhost:3012', changeOrigin: true, pathRewrite: {'^/api/edificios': ''} }));
+app.use('/api/profesores', createProxyMiddleware({ target: 'http://localhost:3012/profesores', changeOrigin: true, pathRewrite: {'^/api/profesores': ''} }));
+app.use('/api/eventos', createProxyMiddleware({ target: 'http://localhost:3013', changeOrigin: true, pathRewrite: {'^/api/eventos': ''} }));
+app.use('/api/rutas', createProxyMiddleware({ target: 'http://localhost:3014', changeOrigin: true, pathRewrite: {'^/api/rutas': ''} }));
+app.use('/api/mapa', createProxyMiddleware({ target: 'http://localhost:3014/mapa', changeOrigin: true, pathRewrite: {'^/api/mapa': ''} }));
+app.use('/api/google', createProxyMiddleware({ target: 'http://localhost:3014/google', changeOrigin: true, pathRewrite: {'^/api/google': ''} }));
+app.use('/api/analytics', createProxyMiddleware({ target: 'http://localhost:3015', changeOrigin: true, pathRewrite: {'^/api/analytics': ''} }));
+app.use('/api/docentes', createProxyMiddleware({ target: 'http://localhost:3016', changeOrigin: true, pathRewrite: {'^/api/docentes': ''} }));
+
+app.get('*', (req: Request, res: Response, next: NextFunction) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+// 404
+app.use('/api/*', (req: Request, res: Response) => {
+  res.status(404).json({ error: 'Ruta de Gateway no encontrada' });
+});
+
+app.listen(PORT, () => {
+  console.log(`
+    |----------------------------------------------------------------|
+    |                                                                |
+    |    AirGuide API Gateway                                        |
+    |                                                                |
+    |     Listening on PORT: ${PORT}                                    |
+    |----------------------------------------------------------------|
+  `);
+});

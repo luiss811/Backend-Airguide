@@ -1,0 +1,26 @@
+import { verifyToken } from '../lib/jwt.js';
+export function authenticate(req, res, next) {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No se proporcionó token de autenticación' });
+        }
+        const token = authHeader.substring(7); // Remove 'Bearer '
+        const payload = verifyToken(token);
+        req.user = payload;
+        next();
+    }
+    catch (error) {
+        return res.status(401).json({ error: 'Token inválido o expirado' });
+    }
+}
+export function requireAdmin(req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'No autenticado' });
+    }
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de administrador' });
+    }
+    next();
+}
+//# sourceMappingURL=auth.js.map
