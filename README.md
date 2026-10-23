@@ -24,7 +24,11 @@ Servidor de Microservicios y API Gateway para la plataforma **Airguide**, constr
 - **Framework Web:** Express
 - **ORM & BD:** Prisma ORM + PostgreSQL
 - **Tipado Estático:** TypeScript
+<<<<<<< HEAD
 - **Autenticación & Cifrado:** JWT (JSON Web Tokens), Bcryptjs (Hashing de contraseñas con salt 10)
+=======
+- **Autenticación & Cifrado:** JWT (JSON Web Tokens), Bcryptjs (Hashing de contraseñas con sal)
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 - **Validación:** Zod
 - **Seguridad & Hardening:** Middleware de cabeceras HTTP de seguridad (CSP, HSTS, X-Frame-Options) y logger de auditoría.
 
@@ -119,6 +123,7 @@ npm start
 ```
 
 ---
+<<<<<<< HEAD
 ### ¡¡¡Para contribuir al proyecto necesitas crea un Fork!
 
 ## Medidas de Seguridad Implementadas
@@ -132,3 +137,16 @@ npm start
 [![Architecture diagram of luiss811/backend-airguide](https://gitdiagram.com/luiss811/backend-airguide/diagram.png)](https://gitdiagram.com/luiss811/backend-airguide?utm_source=readme&utm_medium=picture)
 
 Desarrollado por el equipo **Airguide** | Todos los derechos reservados.
+=======
+
+## Medidas de Seguridad Implementadas
+
+- **Gestión de Secretos:** Credenciales 100% aisladas mediante variables de entorno `.env`.
+- **Cabeceras HTTP Seguras:** Content-Security-Policy (CSP), Strict-Transport-Security (HSTS), X-Frame-Options (`DENY`), X-Content-Type-Options (`nosniff`).
+- **Logging de Seguridad:** Registro de intentos fallidos de autenticación y errores 4xx/5xx (`securityLogger.ts`).
+- **Defensa en Profundidad:** Sanitización de entrada con Zod y hashing de contraseñas con bcrypt (salt 10).
+
+---
+
+Desarrollado por el equipo **Airguide** | Todos los derechos reservados.
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d

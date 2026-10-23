@@ -1,17 +1,32 @@
+<<<<<<< HEAD
 import { prisma } from './prisma.js';
 import * as tf from '@tensorflow/tfjs';
 import { enviarNotificacionDesplazamiento } from './mailer.js';
+=======
+import { PrismaClient } from '@prisma/client';
+import * as tf from '@tensorflow/tfjs';
+import { enviarNotificacionDesplazamiento } from './mailer.js';
+const prisma = new PrismaClient();
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 // Modelo global de TensorFlow
 let modelo = null;
 let maxEdificioId = 21; // Valor por defecto
 /**
  * Inicializa y entrena la red neuronal predictiva de recintos.
+<<<<<<< HEAD
+=======
+ * Simula el aprendizaje basado en hora -> edificio ideal.
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
  */
 async function inicializarNeurona() {
     if (modelo)
         return;
     console.log("Inicializando y entrenando red neuronal de eventos...");
+<<<<<<< HEAD
     // Rango de edificios
+=======
+    // Rango de edificios basado en la DB
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
     const edificios = await prisma.edificio.findMany({ select: { id_edificio: true } });
     if (edificios.length > 0) {
         maxEdificioId = Math.max(...edificios.map(e => e.id_edificio));
@@ -30,6 +45,10 @@ async function inicializarNeurona() {
         }
     }
     else {
+<<<<<<< HEAD
+=======
+        // Fallback o mock si no hay eventos
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
         inputData = [[8], [10], [12], [14], [16], [18], [20]];
         outputData = [[1], [2], [Math.min(3, maxEdificioId)], [1], [2], [1], [Math.min(3, maxEdificioId)]];
     }
@@ -49,6 +68,12 @@ async function inicializarNeurona() {
         epochs: Array.from({ length: 200 }, (_, i) => i + 1)
     };
 }
+<<<<<<< HEAD
+=======
+/**
+ * Entrena manual y forzosamente la red y devuelve su historial.
+ */
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 export async function entrenarNeurona() {
     console.log("Reiniciando y reentrenando red neuronal a petición...");
     modelo = null;
@@ -82,7 +107,11 @@ async function predecirMejorEdificio(fechaInicio, fechaFin, edificioEvitadoId) {
             }
         });
         if (!eventosConflictivos) {
+<<<<<<< HEAD
             // Retorna el primer edificio sin conflictos
+=======
+            // Retorna el primer edificio sin conflictos (en un caso real, ordenado por similitud a `idSugerido`)
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
             return edificio.id_edificio;
         }
     }
@@ -114,7 +143,11 @@ export async function evaluarEvento(nuevoEvento) {
     for (const eventoAfectado of eventosConflicto) {
         const prioridadAfectado = eventoAfectado.prioridad_evento;
         if (prioridadNuevo > prioridadAfectado) {
+<<<<<<< HEAD
             // Ejecutar desplazamiento
+=======
+            // Ejecutar desplazamiento con AI
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
             const nuevoIdEdificio = await predecirMejorEdificio(eventoAfectado.fecha_inicio, eventoAfectado.fecha_fin, eventoAfectado.id_edificio);
             if (!nuevoIdEdificio) {
                 return {

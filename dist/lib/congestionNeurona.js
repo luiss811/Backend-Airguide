@@ -24,19 +24,32 @@ export function getModelo() {
     }
     return modelo;
 }
+<<<<<<< HEAD
+=======
+// Entrenar con datos dinámicos extraídos de Prisma
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 export async function entrenarCongestion() {
     if (isTraining)
         throw new Error("El modelo ya se está entrenando en este momento.");
     isTraining = true;
     try {
         getModelo(); // Asegurar que está creado
+<<<<<<< HEAD
         // Obtener estadisticas
+=======
+        // Obtener estadísticas reales
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
         const rutasActivas = await prisma.ruta.findMany({
             where: { activo: true },
             select: { contador_usos: true }
         });
         const inputs = [];
         const outputs = [];
+<<<<<<< HEAD
+=======
+        // Generar muestras simulando picos escolares
+        // En una universidad, hay más tráfico antes y después de clases (7-8, 14-15, 18-19 hrs)
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
         // El contador_usos escala la congestión base de una ruta
         let iteraciones = 200; // Fake historic epoch points
         const picosHorarios = [7, 8, 13, 14, 18, 19];

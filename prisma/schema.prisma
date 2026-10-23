@@ -70,7 +70,10 @@ model Usuario {
   eventos_creados    Evento[]
   profesor_perfil    Profesor?
   codigos_otp        CodigoOtp[]
+<<<<<<< HEAD
   ventas             Venta[]
+=======
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 
   @@map("usuarios")
 }
@@ -188,7 +191,11 @@ model Ruta {
   origen_id          Int
   destino_tipo       TipoDestino
   destino_id         Int
+<<<<<<< HEAD
   tiempo_estimado    Int?            
+=======
+  tiempo_estimado    Int?            // en minutos
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
   contador_usos      Int             @default(0)
   activo             Boolean         @default(true)
 
@@ -242,6 +249,7 @@ model CodigoOtp {
   @@map("codigos_otp")
 }
 
+<<<<<<< HEAD
 model CaminoGeografico {
   id_camino        Int             @id @default(autoincrement())
   osm_id           BigInt          @unique
@@ -301,3 +309,15 @@ model VentaProducto {
   @@map("venta_productos")
 }
 
+=======
+// NUEVO MODELO: Para guardar los caminos de Overpass Turbo (footway, path, steps)
+model CaminoGeografico {
+  id_camino        Int             @id @default(autoincrement())
+  osm_id           BigInt          @unique
+  tipo             String          // 'footway', 'path', 'steps'
+  geometria        Json            // La línea (LineString) del camino
+  activo           Boolean         @default(true)
+
+  @@map("caminos_geograficos")
+}
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d

@@ -329,6 +329,7 @@ app.delete('/eventos/:id(\\d+)', authenticate, requireProfesor, async (req, res)
         return res.status(500).json({ error: 'Error al eliminar evento' });
     }
 });
+<<<<<<< HEAD
 const PORT = process.env.PORT_DOCENTES || process.env.PORT_PROFESORES || 3016;
 /* v8 ignore start */
 if (process.env.NODE_ENV !== 'test') {
@@ -336,4 +337,8 @@ if (process.env.NODE_ENV !== 'test') {
 }
 /* v8 ignore stop */
 export { app };
+=======
+const PORT = 3016;
+app.listen(PORT, () => console.log('Servicio de profesores corriendo'));
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 //# sourceMappingURL=index.js.map

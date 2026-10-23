@@ -5,9 +5,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 const prisma = new PrismaClient();
 async function main() {
+<<<<<<< HEAD
     await prisma.ventaProducto.deleteMany();
     await prisma.venta.deleteMany();
     await prisma.producto.deleteMany();
+=======
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
     await prisma.caminoGeografico.deleteMany();
     await prisma.logAcceso.deleteMany();
     await prisma.rutaDetalle.deleteMany();
@@ -305,6 +308,7 @@ async function main() {
     else {
         console.warn(`No se encontró el archivo GeoJSON en: ${geojsonPath}`);
     }
+<<<<<<< HEAD
     const playera1 = await prisma.producto.create({
         data: {
             nombre: 'Playera Algodón UTEQ Oficial',
@@ -409,6 +413,8 @@ async function main() {
             }
         }
     });
+=======
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 }
 main()
     .catch((e) => {

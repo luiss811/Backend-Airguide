@@ -1,4 +1,8 @@
 import express, { Request, Response } from 'express';
+<<<<<<< HEAD
+=======
+import cors from 'cors';
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../lib/prisma.js';
 import { generateToken } from '../../lib/jwt.js';
@@ -36,7 +40,11 @@ app.post('/login', async (req: Request, res: Response) => {
     // Invalidate any previous OTPs for this user
     await prisma.codigoOtp.updateMany({
       where: { id_usuario: usuario.id_usuario, usado: false },
+<<<<<<< HEAD
       data: { usado: true },
+=======
+      data: { usado: false },
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
     });
 
     // Generate and store new OTP
@@ -434,6 +442,7 @@ app.get('/users', authenticate, requireAdmin, async (req: AuthRequest, res: Resp
 });
 
 const PORT = process.env.PORT_AUTH || 3011;
+<<<<<<< HEAD
 /* v8 ignore start */
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {  console.log('Servicio de Autenticación corriendo');});
@@ -441,3 +450,6 @@ if (process.env.NODE_ENV !== 'test') {
 /* v8 ignore stop */
 
 export { app };
+=======
+app.listen(PORT, () => {  console.log('Servicio de Autenticación corriendo');});
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d

@@ -341,6 +341,7 @@ app.delete('/cubiculos/:id(\\d+)', authenticate, requireAdmin, async (req, res) 
         return res.status(500).json({ error: 'Error al eliminar cubículo' });
     }
 });
+<<<<<<< HEAD
 // ==========================================
 // E-COMMERCE: PRODUCTOS & VENTAS ENDPOINTS
 // ==========================================
@@ -534,4 +535,8 @@ if (process.env.NODE_ENV !== 'test') {
 }
 /* v8 ignore stop */
 export { app };
+=======
+const PORT = process.env.PORT_BUILDINGS || 3012;
+app.listen(PORT, () => console.log('Servicio de Edificios corriendo'));
+>>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 //# sourceMappingURL=index.js.map
