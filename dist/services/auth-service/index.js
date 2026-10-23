@@ -28,7 +28,7 @@ app.post('/login', async (req, res) => {
         // Invalidate any previous OTPs for this user
         await prisma.codigoOtp.updateMany({
             where: { id_usuario: usuario.id_usuario, usado: false },
-            data: { usado: false },
+            data: { usado: true },
         });
         // Generate and store new OTP
         const codigo = generateOtp();

@@ -369,7 +369,7 @@ app.delete('/eventos/:id(\\d+)', authenticate, requireProfesor, async (req: Auth
   }
 });
 
-const PORT = 3016;
+const PORT = process.env.PORT_DOCENTES || process.env.PORT_PROFESORES || 3016;
 /* v8 ignore start */
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => console.log('Servicio de profesores corriendo'));

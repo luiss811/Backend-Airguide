@@ -1,4 +1,7 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -25,8 +28,9 @@ export async function enviarNotificacionDesplazamiento(
       timeStyle: 'short',
     });
 
+    const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.EMAIL_USER;
     const mailOptions = {
-      from: `"Administración de Eventos" <${process.env.EMAIL_USER}>`,
+      from: `"Administración de Eventos" <${fromAddress}>`,
       to: correoProfesor,
       subject: `Aviso Importante: Reubicación de su evento "${nombreEvento}"`,
       html: `

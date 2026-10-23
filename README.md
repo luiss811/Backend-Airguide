@@ -24,7 +24,7 @@ Servidor de Microservicios y API Gateway para la plataforma **Airguide**, constr
 - **Framework Web:** Express
 - **ORM & BD:** Prisma ORM + PostgreSQL
 - **Tipado Estático:** TypeScript
-- **Autenticación & Cifrado:** JWT (JSON Web Tokens), Bcryptjs (Hashing de contraseñas con sal)
+- **Autenticación & Cifrado:** JWT (JSON Web Tokens), Bcryptjs (Hashing de contraseñas con salt 10)
 - **Validación:** Zod
 - **Seguridad & Hardening:** Middleware de cabeceras HTTP de seguridad (CSP, HSTS, X-Frame-Options) y logger de auditoría.
 
@@ -119,14 +119,16 @@ npm start
 ```
 
 ---
+### ¡¡¡Para contribuir al proyecto necesitas crea un Fork!
 
 ## Medidas de Seguridad Implementadas
 
-- **Gestión de Secretos:** Credenciales 100% aisladas mediante variables de entorno `.env`.
 - **Cabeceras HTTP Seguras:** Content-Security-Policy (CSP), Strict-Transport-Security (HSTS), X-Frame-Options (`DENY`), X-Content-Type-Options (`nosniff`).
-- **Logging de Seguridad:** Registro de intentos fallidos de autenticación y errores 4xx/5xx (`securityLogger.ts`).
-- **Defensa en Profundidad:** Sanitización de entrada con Zod y hashing de contraseñas con bcrypt (salt 10).
+- **Logging de Seguridad:** Registro de intentos fallidos de autenticación y errores 4xx/5xx.
+- **Defensa en Profundidad:** Sanitización de entrada con Zod y hashing de contraseñas con bcrypt.
 
 ---
+
+[![Architecture diagram of luiss811/backend-airguide](https://gitdiagram.com/luiss811/backend-airguide/diagram.png)](https://gitdiagram.com/luiss811/backend-airguide?utm_source=readme&utm_medium=picture)
 
 Desarrollado por el equipo **Airguide** | Todos los derechos reservados.

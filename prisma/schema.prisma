@@ -188,7 +188,7 @@ model Ruta {
   origen_id          Int
   destino_tipo       TipoDestino
   destino_id         Int
-  tiempo_estimado    Int?            // en minutos
+  tiempo_estimado    Int?            
   contador_usos      Int             @default(0)
   activo             Boolean         @default(true)
 
@@ -242,12 +242,11 @@ model CodigoOtp {
   @@map("codigos_otp")
 }
 
-// NUEVO MODELO: Para guardar los caminos de Overpass Turbo (footway, path, steps)
 model CaminoGeografico {
   id_camino        Int             @id @default(autoincrement())
   osm_id           BigInt          @unique
-  tipo             String          // 'footway', 'path', 'steps'
-  geometria        Json            // La línea (LineString) del camino
+  tipo             String          
+  geometria        Json            
   activo           Boolean         @default(true)
 
   @@map("caminos_geograficos")
@@ -258,13 +257,13 @@ model Producto {
   nombre             String
   descripcion        String?         @db.Text
   precio             Decimal         @db.Decimal(10, 2)
-  categoria          String          // 'playera', 'termo', 'llavero', 'sudadera', etc.
+  categoria          String
   stock              Int             @default(0)
   imagen_url         String?         @db.Text
   activo             Boolean         @default(true)
-  fecha_creacion     DateTime        @default(now())
+  creado_en          DateTime        @default(now())
 
-  ventas_productos   VentaProducto[]
+  detalles_venta     VentaProducto[]
 
   @@map("productos")
 }
@@ -272,23 +271,22 @@ model Producto {
 model Venta {
   id_venta           Int             @id @default(autoincrement())
   id_usuario         Int?
-  cliente_nombre     String?
+  cliente_nombre     String
   cliente_correo     String?
   total              Decimal         @db.Decimal(10, 2)
-  metodo_pago        String          @default("tarjeta") // 'tarjeta', 'efectivo', 'transferencia'
-  estado             String          @default("completado") // 'completado', 'pendiente', 'cancelado'
+  metodo_pago        String          @default("tarjeta")
+  estado             String          @default("completado")
   fecha_venta        DateTime        @default(now())
 
   usuario            Usuario?        @relation(fields: [id_usuario], references: [id_usuario], onDelete: SetNull)
   detalles           VentaProducto[]
 
   @@index([id_usuario])
-  @@index([fecha_venta])
   @@map("ventas")
 }
 
 model VentaProducto {
-  id_venta_producto  Int             @id @default(autoincrement())
+  id_detalle         Int             @id @default(autoincrement())
   id_venta           Int
   id_producto        Int
   cantidad           Int
@@ -300,5 +298,6 @@ model VentaProducto {
 
   @@index([id_venta])
   @@index([id_producto])
-  @@map("ventas_productos")
+  @@map("venta_productos")
 }
+

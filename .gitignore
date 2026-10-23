@@ -1,5 +1,5 @@
 node_modules
-/logs
+logs/
 
 
 package-lock.json
@@ -10,3 +10,11 @@ sca-report.json
 
 .env
 .scanerwork
+.prisma
+
+prisma/migrations/
+
+src/prisma/seed.ts
+scripts/checkBuildings.ts
+scripts/seedNewBuildingsRoutes.ts
+src/Data/export.geojson

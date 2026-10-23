@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './prisma.js';
 import * as tf from '@tensorflow/tfjs';
 import { enviarNotificacionDesplazamiento } from './mailer.js';
-const prisma = new PrismaClient();
 // Modelo global de TensorFlow
 let modelo = null;
 let maxEdificioId = 21; // Valor por defecto
