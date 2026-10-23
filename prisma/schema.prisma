@@ -70,10 +70,6 @@ model Usuario {
   eventos_creados    Evento[]
   profesor_perfil    Profesor?
   codigos_otp        CodigoOtp[]
-<<<<<<< HEAD
-  ventas             Venta[]
-=======
->>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 
   @@map("usuarios")
 }
@@ -191,11 +187,7 @@ model Ruta {
   origen_id          Int
   destino_tipo       TipoDestino
   destino_id         Int
-<<<<<<< HEAD
-  tiempo_estimado    Int?            
-=======
   tiempo_estimado    Int?            // en minutos
->>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
   contador_usos      Int             @default(0)
   activo             Boolean         @default(true)
 
@@ -249,67 +241,6 @@ model CodigoOtp {
   @@map("codigos_otp")
 }
 
-<<<<<<< HEAD
-model CaminoGeografico {
-  id_camino        Int             @id @default(autoincrement())
-  osm_id           BigInt          @unique
-  tipo             String          
-  geometria        Json            
-  activo           Boolean         @default(true)
-
-  @@map("caminos_geograficos")
-}
-
-model Producto {
-  id_producto        Int             @id @default(autoincrement())
-  nombre             String
-  descripcion        String?         @db.Text
-  precio             Decimal         @db.Decimal(10, 2)
-  categoria          String
-  stock              Int             @default(0)
-  imagen_url         String?         @db.Text
-  activo             Boolean         @default(true)
-  creado_en          DateTime        @default(now())
-
-  detalles_venta     VentaProducto[]
-
-  @@map("productos")
-}
-
-model Venta {
-  id_venta           Int             @id @default(autoincrement())
-  id_usuario         Int?
-  cliente_nombre     String
-  cliente_correo     String?
-  total              Decimal         @db.Decimal(10, 2)
-  metodo_pago        String          @default("tarjeta")
-  estado             String          @default("completado")
-  fecha_venta        DateTime        @default(now())
-
-  usuario            Usuario?        @relation(fields: [id_usuario], references: [id_usuario], onDelete: SetNull)
-  detalles           VentaProducto[]
-
-  @@index([id_usuario])
-  @@map("ventas")
-}
-
-model VentaProducto {
-  id_detalle         Int             @id @default(autoincrement())
-  id_venta           Int
-  id_producto        Int
-  cantidad           Int
-  precio_unitario    Decimal         @db.Decimal(10, 2)
-  subtotal           Decimal         @db.Decimal(10, 2)
-
-  venta              Venta           @relation(fields: [id_venta], references: [id_venta], onDelete: Cascade)
-  producto           Producto        @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade)
-
-  @@index([id_venta])
-  @@index([id_producto])
-  @@map("venta_productos")
-}
-
-=======
 // NUEVO MODELO: Para guardar los caminos de Overpass Turbo (footway, path, steps)
 model CaminoGeografico {
   id_camino        Int             @id @default(autoincrement())
@@ -320,4 +251,3 @@ model CaminoGeografico {
 
   @@map("caminos_geograficos")
 }
->>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d

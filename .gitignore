@@ -7,7 +7,7 @@ docker-compose.yml
 gen.conf
 sca-report.json
 
-
+*.test.ts
 .env
 .scanerwork
 .prisma

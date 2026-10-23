@@ -208,7 +208,6 @@ app.get('/heatmap', async (req: Request, res: Response) => {
 });
 
 const PORT = process.env.PORT_NAVIGATION || 3014;
-<<<<<<< HEAD
 /* v8 ignore start */
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => console.log('Servicio de Navegación corriendo'));
@@ -216,6 +215,3 @@ if (process.env.NODE_ENV !== 'test') {
 /* v8 ignore stop */
 
 export { app };
-=======
-app.listen(PORT, () => console.log('Servicio de Navegación corriendo'));
->>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
