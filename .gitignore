@@ -4,18 +4,28 @@ logs/
 
 package-lock.json
 docker-compose.yml
+
 gen.conf
 sca-report.json
+
 src/**/*.test.ts
 src/**/*.spec.ts
-*.test.ts
+
 .env
+.env.development
+
 .scanerwork
+
+vitest.config.ts
+
 .prisma
 
-prisma/migrations/
+prisma/
 
-src/prisma/seed.ts
-scripts/checkBuildings.ts
-scripts/seedNewBuildingsRoutes.ts
-src/Data/export.geojson
+src/prisma
+
+scripts/
+
+src/t
+
+dist/t

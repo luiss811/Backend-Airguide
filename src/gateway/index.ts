@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 // Configuración de URLs de microservicios
 const AUTH_URL = `${process.env.SERVICE_URL}:${process.env.PORT_AUTH}`;
@@ -27,7 +27,6 @@ const DOCENTES_URL = `${process.env.SERVICE_URL}:${process.env.PORT_DOCENTES}`;
 const corsOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://airguide-lac.vercel.app',
   process.env.CORS_ORIGIN,
 ].filter(Boolean) as string[];
 
@@ -81,7 +80,7 @@ app.get('*', (req, res, next) => {
   }
   return res.json({
     status: 'ok',
-    message: 'AirGuide API Gateway activo',
+    message: 'API Gateway activo',
     service: 'API Gateway',
     timestamp: new Date().toISOString(),
   });
@@ -89,7 +88,7 @@ app.get('*', (req, res, next) => {
 
 // 404
 app.use('/api/*', (req, res) => {
-  res.status(404).json({ error: 'Ruta de Gateway no encontrada' });
+  res.status(404).json({ error: 'Ruta Gateway no encontrada' });
 });
 
 /* v8 ignore start */

@@ -4,7 +4,7 @@ import { enviarNotificacionDesplazamiento } from './mailer.js';
 
 // Modelo global de TensorFlow
 let modelo: tf.Sequential | null = null;
-let maxEdificioId = 21; // Valor por defecto
+let maxEdificioId = 21;
 
 /**
  * Inicializa y entrena la red neuronal predictiva de recintos.
@@ -12,7 +12,7 @@ let maxEdificioId = 21; // Valor por defecto
 async function inicializarNeurona() {
   if (modelo) return;
 
-  console.log("Inicializando y entrenando red neuronal de eventos...");
+  console.log("Entrenando red neuronal para eventos...");
   
   // Rango de edificios
   const edificios = await prisma.edificio.findMany({ select: { id_edificio: true } });
@@ -52,7 +52,7 @@ async function inicializarNeurona() {
   });
 
   const history = await modelo.fit(horas, preferidos, { epochs: 200, verbose: 0 });
-  console.log("¡Entrenamiento de neurona terminado!");
+  console.log("¡Entrenamiento terminado!");
   
   return {
     loss: history.history.loss as number[],
@@ -61,7 +61,7 @@ async function inicializarNeurona() {
 }
 
 export async function entrenarNeurona() {
-  console.log("Reiniciando y reentrenando red neuronal a petición...");
+  console.log("Reiniciando red neuronal...");
   modelo = null; 
   return await inicializarNeurona();
 }

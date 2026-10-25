@@ -1,9 +1,6 @@
 import nodemailer from 'nodemailer';
-<<<<<<< HEAD
 import dotenv from 'dotenv';
 dotenv.config();
-=======
->>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -20,14 +17,9 @@ export async function enviarNotificacionDesplazamiento(correoProfesor, nombrePro
             dateStyle: 'full',
             timeStyle: 'short',
         });
-<<<<<<< HEAD
         const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.EMAIL_USER;
         const mailOptions = {
             from: `"Administración de Eventos" <${fromAddress}>`,
-=======
-        const mailOptions = {
-            from: `"Administración de Eventos" <${process.env.EMAIL_USER}>`,
->>>>>>> bc35b8ee1a255e53daffa306a1b142de0e05507d
             to: correoProfesor,
             subject: `Aviso Importante: Reubicación de su evento "${nombreEvento}"`,
             html: `
