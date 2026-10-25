@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { prisma } from '../../lib/prisma.js';
 import { authenticate, requireAdmin, AuthRequest } from '../../middleware/auth.middleware.js';
 import { entrenarCongestion } from '../../lib/congestionNeurona.js';
+import { Edificio, Ruta } from '@prisma/client';
 
 const app = express();
 app.use(express.json());
@@ -97,11 +98,11 @@ app.get('/rutas-populares', authenticate, requireAdmin, async (req: AuthRequest,
     });
     
     // Mappear IDs a Nombres
-    const edificiosIds = Array.from(new Set(rutas.flatMap(r => [r.origen_id, r.destino_id])));
+    const edificiosIds = Array.from(new Set(rutas.flatMap((r:Ruta) => [r.origen_id, r.destino_id])));
     const edificios = await prisma.edificio.findMany({
       where: { id_edificio: { in: edificiosIds } }
     });
-    const mapEdificios = Object.fromEntries(edificios.map(e => [e.id_edificio, e.nombre]));
+    const mapEdificios = Object.fromEntries(edificios.map((e:Edificio) => [e.id_edificio, e.nombre]));
 
     const response = rutas.map(r => ({
       id: r.id_ruta,

@@ -94,11 +94,11 @@ app.get('/rutas-populares', authenticate, requireAdmin, async (req, res) => {
             take: 10,
         });
         // Mappear IDs a Nombres
-        const edificiosIds = Array.from(new Set(rutas.flatMap(r => [r.origen_id, r.destino_id])));
+        const edificiosIds = Array.from(new Set(rutas.flatMap((r) => [r.origen_id, r.destino_id])));
         const edificios = await prisma.edificio.findMany({
             where: { id_edificio: { in: edificiosIds } }
         });
-        const mapEdificios = Object.fromEntries(edificios.map(e => [e.id_edificio, e.nombre]));
+        const mapEdificios = Object.fromEntries(edificios.map((e) => [e.id_edificio, e.nombre]));
         const response = rutas.map(r => ({
             id: r.id_ruta,
             origen: mapEdificios[r.origen_id] || `${r.origen_tipo} ${r.origen_id}`,
