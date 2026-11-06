@@ -40,8 +40,17 @@ app.post('/login', async (req, res) => {
                 expira_en,
             },
         });
-        // Send OTP via email
-        await sendOtpEmail(usuario.correo, usuario.nombre, codigo);
+        // Send OTP via email (with fallback to logs)
+        try {
+            await sendOtpEmail(usuario.correo, usuario.nombre, codigo);
+            console.log(`[AUTH] Correo OTP enviado exitosamente a ${usuario.correo}`);
+        }
+        catch (mailErr) {
+            console.warn(`[AUTH] No se pudo entregar el correo a ${usuario.correo}:`, mailErr?.message || mailErr);
+            console.log(`\n========================================================`);
+            console.log(`[OTP BACKUP] CÓDIGO PARA ${usuario.correo}: ${codigo}`);
+            console.log(`========================================================\n`);
+        }
         return res.json({
             requiresTwoFactor: true,
             correo: usuario.correo,
@@ -141,7 +150,16 @@ app.post('/resend-otp', async (req, res) => {
         await prisma.codigoOtp.create({
             data: { id_usuario: usuario.id_usuario, codigo, expira_en },
         });
-        await sendOtpEmail(usuario.correo, usuario.nombre, codigo);
+        try {
+            await sendOtpEmail(usuario.correo, usuario.nombre, codigo);
+            console.log(`[AUTH] Correo OTP reenviado exitosamente a ${usuario.correo}`);
+        }
+        catch (mailErr) {
+            console.warn(`[AUTH] No se pudo entregar el correo a ${usuario.correo}:`, mailErr?.message || mailErr);
+            console.log(`\n========================================================`);
+            console.log(`[OTP BACKUP] CÓDIGO PARA ${usuario.correo}: ${codigo}`);
+            console.log(`========================================================\n`);
+        }
         return res.json({ message: 'Nuevo código enviado a tu correo electrónico.' });
     }
     catch (error) {
@@ -223,7 +241,16 @@ app.post('/forgot-password', async (req, res) => {
         await prisma.codigoOtp.create({
             data: { id_usuario: usuario.id_usuario, codigo, expira_en },
         });
-        await sendPasswordResetEmail(usuario.correo, usuario.nombre, codigo);
+        try {
+            await sendPasswordResetEmail(usuario.correo, usuario.nombre, codigo);
+            console.log(`[AUTH] Correo de recuperación enviado a ${usuario.correo}`);
+        }
+        catch (mailErr) {
+            console.warn(`[AUTH] No se pudo entregar correo de recuperación a ${usuario.correo}:`, mailErr?.message || mailErr);
+            console.log(`\n========================================================`);
+            console.log(`[RESET BACKUP] CÓDIGO PARA ${usuario.correo}: ${codigo}`);
+            console.log(`========================================================\n`);
+        }
         return res.json({ message: 'Si el correo existe, recibirás un código de recuperación.' });
     }
     catch (error) {
