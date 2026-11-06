@@ -26,7 +26,7 @@ const DOCENTES_URL = `${process.env.SERVICE_URL}:${process.env.PORT_DOCENTES}`;
 
 const corsOrigins = [
   'http://localhost:5173',
-  'http://localhost:3000',
+  'http://localhost:3001',
   process.env.CORS_ORIGIN,
 ].filter(Boolean) as string[];
 

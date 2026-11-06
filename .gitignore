@@ -1,7 +1,6 @@
 node_modules
 logs/
 
-
 package-lock.json
 docker-compose.yml
 
@@ -17,12 +16,6 @@ src/**/*.spec.ts
 .scanerwork
 
 vitest.config.ts
-
-.prisma
-
-prisma/
-
-src/prisma
 
 scripts/
 
