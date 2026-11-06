@@ -1,26 +1,18 @@
 import { Resend } from 'resend';
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 const resendApiKey = process.env.RESEND_API_KEY;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-});
+if (!resendApiKey) {
+    console.warn('[MAILER WARNING] RESEND_API_KEY no está configurada en las variables de entorno.');
+}
+const resend = new Resend(resendApiKey);
+const defaultFrom = process.env.RESEND_FROM || 'Administración de Eventos <onboarding@resend.dev>';
 export async function enviarNotificacionDesplazamiento(correoProfesor, nombreProfesor, nombreEvento, edificioAnterior, edificioNuevo, fechaEvento) {
     try {
         const fechaFormateada = fechaEvento.toLocaleString('es-MX', {
             dateStyle: 'full',
             timeStyle: 'short',
         });
-        const fromAddress = process.env.RESEND_FROM || (resend ? 'Administración de Eventos <onboarding@resend.dev>' : (process.env.SMTP_FROM || process.env.SMTP_USER || process.env.EMAIL_USER || 'no-reply@airguide.com'));
         const subject = `Aviso Importante: Reubicación de su evento "${nombreEvento}"`;
         const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
@@ -41,27 +33,16 @@ export async function enviarNotificacionDesplazamiento(correoProfesor, nombrePro
         <p style="font-size: 0.9em; color: #757575;">Atentamente,<br>Rectoría y Administración General</p>
       </div>
     `;
-        if (resend) {
-            const { data, error } = await resend.emails.send({
-                from: fromAddress,
-                to: correoProfesor,
-                subject,
-                html,
-            });
-            if (error) {
-                throw new Error(`[Resend Error] ${error.message}`);
-            }
-            console.log(`Correo enviado vía Resend a ${correoProfesor}: ${data?.id}`);
-            return;
-        }
-        const mailOptions = {
-            from: `"Administración de Eventos" <${fromAddress}>`,
-            to: correoProfesor,
+        const { data, error } = await resend.emails.send({
+            from: defaultFrom,
+            to: [correoProfesor],
             subject,
             html,
-        };
-        const info = await transporter.sendMail(mailOptions);
-        console.log(`Correo enviado a ${correoProfesor}: ${info.messageId}`);
+        });
+        if (error) {
+            throw new Error(`[Resend Error] ${error.message}`);
+        }
+        console.log(`Correo enviado vía Resend a ${correoProfesor}: ${data?.id}`);
     }
     catch (error) {
         console.error(`Error enviando correo a ${correoProfesor}:`, error);

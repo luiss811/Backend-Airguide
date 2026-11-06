@@ -1,51 +1,24 @@
 import { Resend } from 'resend';
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const resendApiKey = process.env.RESEND_API_KEY;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: Number(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-async function deliverEmail(to: string, subject: string, html: string, fromName = 'AirGuide'): Promise<void> {
-  const fromAddress = process.env.RESEND_FROM || (resend ? `${fromName} <onboarding@resend.dev>` : (process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@airguide.com'));
-
-  if (resend) {
-    const { error } = await resend.emails.send({
-      from: fromAddress,
-      to,
-      subject,
-      html,
-    });
-    if (error) {
-      throw new Error(`[Resend Error] ${error.message}`);
-    }
-    return;
-  }
-
-  await transporter.sendMail({
-    from: `"${fromName}" <${fromAddress}>`,
-    to,
-    subject,
-    html,
-  });
+if (!resendApiKey) {
+  console.warn('[EMAIL WARNING] RESEND_API_KEY no está configurada en las variables de entorno.');
 }
 
+const resend = new Resend(resendApiKey);
+
+// Resend permite enviar desde onboarding@resend.dev por defecto si no hay dominio personalizado configurado
+const defaultFrom = process.env.RESEND_FROM || 'AirGuide <onboarding@resend.dev>';
+
 export async function sendOtpEmail(correo: string, nombre: string, codigo: string): Promise<void> {
-  await deliverEmail(
-    correo,
-    'Tu código de verificación - AirGuide',
-    `
+  const { data, error } = await resend.emails.send({
+    from: defaultFrom,
+    to: [correo],
+    subject: 'Tu código de verificación - AirGuide',
+    html: `
       <!DOCTYPE html>
       <html lang="es">
       <head>
@@ -98,15 +71,19 @@ export async function sendOtpEmail(correo: string, nombre: string, codigo: strin
       </body>
       </html>
     `,
-    'AirGuide'
-  );
+  });
+
+  if (error) {
+    throw new Error(`[Resend Error] ${error.message}`);
+  }
 }
 
 export async function sendPasswordResetEmail(correo: string, nombre: string, codigo: string): Promise<void> {
-  await deliverEmail(
-    correo,
-    'Recuperación de contraseña - AirGuide',
-    `
+  const { data, error } = await resend.emails.send({
+    from: defaultFrom,
+    to: [correo],
+    subject: 'Recuperación de contraseña - AirGuide',
+    html: `
       <!DOCTYPE html>
       <html lang="es">
       <head>
@@ -159,6 +136,9 @@ export async function sendPasswordResetEmail(correo: string, nombre: string, cod
       </body>
       </html>
     `,
-    'AirGuide Soporte'
-  );
+  });
+
+  if (error) {
+    throw new Error(`[Resend Error] ${error.message}`);
+  }
 }
